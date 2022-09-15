@@ -48,6 +48,11 @@ after the first setup, the correct environment can be set using
 ```bash
 source setup.sh
 ```
+
+alternatively, for use without a grid proxy, use:
+```bash
+source setupWithoutProxy.sh
+```
 ## Where to find denifitions
 
 `config/parameters.py` contains defintions about object selections, triggers, JSON files, etc
