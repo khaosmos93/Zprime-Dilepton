@@ -107,9 +107,9 @@ parameters = {
     "global_path": global_path,
     "out_path": f"{args.year}_{args.label}_{local_time}",
     # "server": "root://xrootd.rcac.purdue.edu/",
-    "server": "root://cmsxrootd.fnal.gov//",
+    #"server": "root://cmsxrootd.fnal.gov//",
     "xrootd": False,
-    #"server": "/mnt/hadoop/",
+    "server": "/mnt/hadoop/",
     "datasets_from": "Zprime",
     "from_das": True,
     "chunksize": int(args.chunksize),
@@ -311,12 +311,12 @@ if __name__ == "__main__":
             # if "dy200to400" not in sample:
             # if sample != "ttbar_lep_inclusive":
             #    continue
-            # if "ttbar_lep_M500to800" not in sample:
+            if "dy200to400" not in sample:
             # if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
-            #    continue
-
-            if group != "other_mc":
                 continue
+
+            #if group != "other_mc":
+            #    continue
             #if sample not in ["data_A"]:
             #    continue
             # if group != "data":
