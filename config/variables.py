@@ -132,7 +132,18 @@ variables.append(
 variables.append(
     Variable("dimuon_cos_theta_cs", r"$cos\theta_{\mathrm{CS}}$", 20, -1, 1, 0.5, 1e6)
 )
-
+variables.append(
+    Variable("bjet1_pt", r"bjet1 p_T [GeV]",100, 0, 500, 1e-5, 1e5)
+)
+variables.append(
+    Variable("bjet2_pt", r"bjet2 p_T [GeV]",100, 0, 500, 1e-5, 1e5)
+)
+variables.append(
+    Variable("mu1_pt", r"\mu_{1} p_T [GeV]",100, 0, 500, 1e-5, 1e5)
+)
+variables.append(
+    Variable("mu2_pt", r"\mu_{2) p_T [GeV]",100, 0, 500, 1e-5, 1e5)
+)   
 variables_lookup = {}
 for v in variables:
     variables_lookup[v.name] = v
