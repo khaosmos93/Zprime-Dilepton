@@ -21,7 +21,9 @@ parameters["lumimask_Pre-UL_el"] = {
 parameters["lumimask_UL_el"] = {
     "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt",
 }
-
+parameters["lumimask_UL_mu"] = {
+    "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON_MuonPhys.txt",
+}
 
 parameters["mu_hlt"] = {
     "2016": ["Mu50", "TkMu50"],
