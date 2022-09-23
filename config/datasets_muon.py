@@ -78,6 +78,39 @@ datasets = {
         "bsll_lambda8TeV_M500to1000": "/bsll_4FermionCI_M_500To1000_Lambda8TeV_13TeV_MadgraphMLM/jschulte-RunIISummer20UL18-106X_upgrade2018_realistic_v16_L1v1_MG29X-v1_NANOAOD-00000000000000000000000000000000/USER",
         "bsll_lambda8TeV_M1000to2000": "/bsll_4FermionCI_M_1000To2000_Lambda8TeV_13TeV_MadgraphMLM/jschulte-RunIISummer20UL18-106X_upgrade2018_realistic_v16_L1v1_MG29X-v1_NANOAOD-00000000000000000000000000000000/USER",
         "bsll_lambda8TeV_M2000toInf": "/bsll_4FermionCI_M_2000ToInf_Lambda8TeV_13TeV_MadgraphMLM/jschulte-RunIISummer20UL18-106X_upgrade2018_realistic_v16_L1v1_MG29X-v1_NANOAOD-00000000000000000000000000000000/USER",
+
+        "bbll_6TeV_M1300To2000_negLL": "/bbll_4FermionCI_M-1300To2000_Lambda-6TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_6TeV_M2000ToInf_negLL": "/bbll_4FermionCI_M-2000ToInf_Lambda-6TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_6TeV_M300To800_negLL": "/bbll_4FermionCI_M-300To800_Lambda-6TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_6TeV_M800To1300_negLL": "/bbll_4FermionCI_M-800To1300_Lambda-6TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+    
+        "bbll_10TeV_M1300To2000_negLL": "/bbll_4FermionCI_M-1300To2000_Lambda-10TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_10TeV_M2000ToInf_negLL": "/bbll_4FermionCI_M-2000ToInf_Lambda-10TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_10TeV_M300To800_negLL": "/bbll_4FermionCI_M-300To800_Lambda-10TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_10TeV_M800To1300_negLL": "/bbll_4FermionCI_M-800To1300_Lambda-10TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+    
+        "bbll_14TeV_M1300To2000_negLL": "/bbll_4FermionCI_M-1300To2000_Lambda-14TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_14TeV_M2000ToInf_negLL": "/bbll_4FermionCI_M-2000ToInf_Lambda-14TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_14TeV_M300To800_negLL": "/bbll_4FermionCI_M-300To800_Lambda-14TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_14TeV_M800To1300_negLL": "/bbll_4FermionCI_M-800To1300_Lambda-14TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+
+        "bbll_18TeV_M1300To2000_negLL": "/bbll_4FermionCI_M-1300To2000_Lambda-18TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_18TeV_M2000ToInf_negLL": "/bbll_4FermionCI_M-2000ToInf_Lambda-18TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_18TeV_M300To800_negLL": "/bbll_4FermionCI_M-300To800_Lambda-18TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_18TeV_M800To1300_negLL": "/bbll_4FermionCI_M-800To1300_Lambda-18TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+
+        "bbll_22TeV_M1300To2000_negLL": "/bbll_4FermionCI_M-1300To2000_Lambda-22TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_22TeV_M2000ToInf_negLL": "/bbll_4FermionCI_M-2000ToInf_Lambda-22TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_22TeV_M300To800_negLL": "/bbll_4FermionCI_M-300To800_Lambda-22TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_22TeV_M800To1300_negLL": "/bbll_4FermionCI_M-800To1300_Lambda-22TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+
+        "bbll_26TeV_M1300To2000_negLL": "/bbll_4FermionCI_M-1300To2000_Lambda-26TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_26TeV_M2000ToInf_negLL": "/bbll_4FermionCI_M-2000ToInf_Lambda-26TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_26TeV_M300To800_negLL": "/bbll_4FermionCI_M-300To800_Lambda-26TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+        "bbll_26TeV_M800To1300_negLL": "/bbll_4FermionCI_M-800To1300_Lambda-26TeV_negEtaLL_TuneCP2_13TeV-madgraphMLM-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v2/NANOAODSIM",
+
+
+
     },
     "2017": {
         "dyInclusive50": "/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/jschulte-RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9_NANOAOD-00000000000000000000000000000000/USER",

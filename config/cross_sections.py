@@ -70,6 +70,8 @@ cross_sections = {
     "ttbar_lep_M800to1200": 0.03265,
     "ttbar_lep_M1200to1800": 0.00305,
     "ttbar_lep_M1800toInf": 0.00017,
+
+    ### bbll samples from private production:
     "bbll_4TeV_M1000_negLL": 1.298e-2,
     "bbll_4TeV_M1000_negLR": 1.415e-2,
     "bbll_4TeV_M1000_posLL": 1.516e-2,
@@ -86,4 +88,54 @@ cross_sections = {
     "bbll_8TeV_M400_negLR": 4.523e-3,
     "bbll_8TeV_M400_posLL": 8.489e-3,
     "bbll_8TeV_M400_posLR": 2.072e-3,
+    ### bsll samples from private production
+    "bsll_lambda1TeV_M1000to2000": 0.03227000,
+    "bsll_lambda2TeV_M1000to2000": 0.00201400,
+    "bsll_lambda4TeV_M1000to2000": 0.00012590,
+    "bsll_lambda8TeV_M1000to2000": 0.00000791,
+    "bsll_lambda1TeV_M2000toInf": 0.00643600,
+    "bsll_lambda2TeV_M2000toInf": 0.00040430,
+    "bsll_lambda4TeV_M2000toInf": 0.00002524,
+    "bsll_lambda8TeV_M2000toInf": 0.00000156,
+    "bsll_lambda1TeV_M200to500": 0.13690000,
+    "bsll_lambda2TeV_M200to500": 0.00857600,
+    "bsll_lambda4TeV_M200to500": 0.00053590,
+    "bsll_lambda8TeV_M200to500": 0.00003345,
+    "bsll_lambda1TeV_M500to1000": 0.07736000,
+    "bsll_lambda2TeV_M500to1000": 0.00481600,
+    "bsll_lambda4TeV_M500to1000": 0.00030010,
+    "bsll_lambda8TeV_M500to1000": 0.00001894,
+    ### bbll samples from official production
+    "bbll_6TeV_M1300To2000_negLL": 8.979e-04,
+    "bbll_6TeV_M2000ToInf_negLL": 2.485e-04,
+    "bbll_6TeV_M300To800_negLL": -0.005252436882944,
+    "bbll_6TeV_M800To1300_negLL": 2.126e-03,
+
+    "bbll_10TeV_M1300To2000_negLL": 3.800e-04,
+    "bbll_10TeV_M2000ToInf_negLL": 1.373e-04,
+    "bbll_10TeV_M300To800_negLL": -0.005045158676077999,
+    "bbll_10TeV_M800To1300_negLL": 7.733e-05,
+
+    "bbll_14TeV_M1300To2000_negLL": 5.417e-05,
+    "bbll_14TeV_M2000ToInf_negLL": 3.048e-05,
+    "bbll_14TeV_M300To800_negLL": -0.0029449024720912,
+    "bbll_14TeV_M800To1300_negLL": -2.106e-04,
+
+    "bbll_18TeV_M1300To2000_negLL": -4.6936163158e-07,
+    "bbll_18TeV_M2000ToInf_negLL": 8.547e-06,
+    "bbll_18TeV_M300To800_negLL": -0.0018851545396580999,
+    "bbll_18TeV_M800To1300_negLL": -5.90717325258e-05,
+
+    "bbll_22TeV_M1300To2000_negLL": -3.1630243580479998e-06,
+    "bbll_22TeV_M2000ToInf_negLL": 2.387e-06,
+    "bbll_22TeV_M300To800_negLL": -0.0013085742388313,
+    "bbll_22TeV_M800To1300_negLL": -4.753660083629e-05,
+
+    "bbll_26TeV_M1300To2000_negLL": -3.378014398961e-06,
+    "bbll_26TeV_M2000ToInf_negLL": 3.324e-07,
+    "bbll_26TeV_M300To800_negLL": -0.0009505105447133999,
+    "bbll_26TeV_M800To1300_negLL": -3.7536927547050005e-05,
+
+
+
 }
