@@ -201,7 +201,7 @@ class DimuonProcessor(processor.ProcessorABC):
 
         else:
             # For Data: apply Lumi mask
-            lumi_info = LumiMask(self.parameters["lumimask_Pre-UL_mu"])
+            lumi_info = LumiMask(self.parameters["lumimask_UL_mu"])
             mask = lumi_info(df.run, df.luminosityBlock)
         # Apply HLT to both Data and MC
 
@@ -461,7 +461,6 @@ class DimuonProcessor(processor.ProcessorABC):
 
         # for wgt in weights.df.columns:
         #    output[f"wgt_{wgt}"] = weights.get_weight(wgt)
-
         if is_mc and "dy" in dataset and self.applykFac:
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()

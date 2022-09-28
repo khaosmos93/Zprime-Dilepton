@@ -33,9 +33,9 @@ parser.add_argument(
     "-y",
     "--year",
     dest="year",
-    default="2016",
+    default="2018",
     action="store",
-    help="Year to process (2016, 2017 or 2018)",
+    help="Year to process (2016preVFP,2016postVFP, 2017 or 2018)",
 )
 parser.add_argument(
     "-l",
@@ -73,7 +73,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.148.60"  # hammer-c000
+node_ip = "128.211.148.61"  # hammer-c000
 # node_ip = "128.211.149.135"
 # node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
@@ -107,9 +107,9 @@ parameters = {
     "global_path": global_path,
     "out_path": f"{args.year}_{args.label}_{local_time}",
     # "server": "root://xrootd.rcac.purdue.edu/",
-    #"server": "root://cmsxrootd.fnal.gov//",
-    "xrootd": False,
-    "server": "/mnt/hadoop/",
+    "server": "root://cmsxrootd.fnal.gov//",
+    "xrootd": True,
+    #"server": "/mnt/hadoop/",
     "datasets_from": "Zprime",
     "from_das": True,
     "chunksize": int(args.chunksize),
@@ -218,73 +218,127 @@ if __name__ == "__main__":
         # 'single_file': [
         #     'test_file',
         # ],
-        "data": [
-            "data_A",
-            "data_B",
-            "data_C",
-            "data_D",
-        ],
         "other_mc": [
-            "WZ",
+            "WZ1L1Nu2Q",
             "WZ3LNu",
             "WZ2L2Q",
-            "ZZ",
-            #"ZZ2L2Nu",
-            "ZZ2L2Nu_ext",
+            "ZZ2L2Nu",
             "ZZ2L2Q",
             "ZZ4L",
-            "ZZ4L_ext",
             "WWinclusive",
             "WW200to600",
             "WW600to1200",
             "WW1200to2500",
-            "WW2500",
-            "dyInclusive50",
-            "Wjets",
+            "WW2500toInf",
             "ttbar_lep_inclusive",
-            "ttbar_lep_M500to800_ext",
-            "WW600to1200",
-            "WW1200to2500",
+            "ttbar_lep_M500to800",
+            "ttbar_lep_M800to1200",
             "ttbar_lep_M1200to1800",
             "ttbar_lep_M1800toInf",
             "Wantitop",
-            "Wantitop1",
-            "Wantitop2",
             "tW",
-            "tW1",
-            "tW2",
         ],
         "dy": [
-            # "dy50to120",
-            "dy120to200",
-            "dy200to400",
-            "dy400to800",
-            "dy800to1400",
-            "dy1400to2300",
-            "dy2300to3500",
-            "dy3500to4500",
-            "dy4500to6000",
-            "dy6000toInf",
+            "dy0J_M200to400",
+            "dy0J_M400to800",
+            "dy0J_M800to1400",
+            "dy0J_M1400to2300",
+            "dy0J_M2300to3500",
+            "dy0J_M3500to4500",
+            "dy0J_M4500to6000",
+            "dy0J_M6000toInf",
+	    "dy1J_M200to400",
+            "dy1J_M400to800",
+            "dy1J_M800to1400",
+            "dy1J_M1400to2300",
+            "dy1J_M2300to3500",
+            "dy1J_M3500to4500",
+            "dy1J_M4500to6000",
+            "dy1J_M6000toInf",
+            "dy2J_M200to400",
+            "dy2J_M400to800",
+            "dy2J_M800to1400",
+            "dy2J_M1400to2300",
+            "dy2J_M2300to3500",
+            "dy2J_M3500to4500",
+            "dy2J_M4500to6000",
+            "dy2J_M6000toInf",
         ],
         "CI": [
-            "bbll_4TeV_M1000_negLL",
-            "bbll_4TeV_M1000_negLR",
-            "bbll_4TeV_M1000_posLL",
-            "bbll_4TeV_M1000_posLR",
-            "bbll_4TeV_M400_negLL",
-            "bbll_4TeV_M400_negLR",
-            "bbll_4TeV_M400_posLL",
-            "bbll_4TeV_M400_posLR",
-            "bbll_8TeV_M1000_negLL",
-            "bbll_8TeV_M1000_negLR",
-            "bbll_8TeV_M1000_posLL",
-            "bbll_8TeV_M1000_posLR",
-            "bbll_8TeV_M400_negLL",
-            "bbll_8TeV_M400_negLR",
-            "bbll_8TeV_M400_posLL",
-            "bbll_8TeV_M400_posLR",
+            "bsll_lambda1TeV_M200to500",
+            "bsll_lambda1TeV_M500to1000",
+            "bsll_lambda1TeV_M1000to2000",
+            "bsll_lambda1TeV_M2000toInf",
+            "bsll_lambda2TeV_M200to500",
+            "bsll_lambda2TeV_M500to1000",
+            "bsll_lambda2TeV_M1000to2000",
+            "bsll_lambda2TeV_M2000toInf",
+            "bsll_lambda4TeV_M200to500",
+            "bsll_lambda4TeV_M500to1000",
+            "bsll_lambda4TeV_M1000to2000",
+            "bsll_lambda4TeV_M2000toInf",
+            "bsll_lambda8TeV_M200to500",
+            "bsll_lambda8TeV_M500to1000",
+            "bsll_lambda8TeV_M1000to2000",
+            "bsll_lambda8TeV_M2000toInf",
+ 
+            "bbll_6TeV_M1300To2000_negLL",
+            "bbll_6TeV_M2000ToInf_negLL",
+            "bbll_6TeV_M300To800_negLL",
+            "bbll_6TeV_M800To1300_negLL",
+            "bbll_10TeV_M1300To2000_negLL",
+            "bbll_10TeV_M2000ToInf_negLL",
+            "bbll_10TeV_M300To800_negLL",
+            "bbll_10TeV_M800To1300_negLL",
+            "bbll_14TeV_M1300To2000_negLL",
+            "bbll_14TeV_M2000ToInf_negLL",
+            "bbll_14TeV_M300To800_negLL",
+            "bbll_14TeV_M800To1300_negLL",
+            "bbll_18TeV_M1300To2000_negLL",
+            "bbll_18TeV_M2000ToInf_negLL",
+            "bbll_18TeV_M300To800_negLL",
+            "bbll_18TeV_M800To1300_negLL",
+            "bbll_22TeV_M1300To2000_negLL",
+            "bbll_22TeV_M2000ToInf_negLL",
+            "bbll_22TeV_M300To800_negLL",
+            "bbll_22TeV_M800To1300_negLL",
+            "bbll_24TeV_M1300To2000_negLL",
+            "bbll_24TeV_M2000ToInf_negLL",
+            "bbll_24TeV_M300To800_negLL",
+            "bbll_24TeV_M800To1300_negLL",
         ],
     }
+    if parameters["year"] == "2018":
+        smp["data"] = [
+            "data_A",
+            "data_B",
+            "data_C",
+            "data_D",
+            ]
+    elif parameters["year"] == "2017":
+        smp["data"] = [
+            "data_B",
+            "data_C",
+            "data_D",
+            "data_E",
+            "data_F",
+            ]
+    elif parameters["year"] == "2016preVP":
+        smp["data"] = [
+            "data_Bv1",
+            "data_Bv2",
+            "data_C",
+            "data_D",
+            "data_E",
+            "data_F",
+            ]
+    elif parameters["year"] == "2016preVP":
+        smp["data"] = [
+            "data_F",
+            "data_G",
+            "data_H",
+            ]
+
     # prepare Dask client
     if parameters["local_cluster"]:
         # create local cluster
@@ -311,15 +365,15 @@ if __name__ == "__main__":
             # if "dy200to400" not in sample:
             # if sample != "ttbar_lep_inclusive":
             #    continue
-            if "dy200to400" not in sample:
+            #if "dy0J_M3500to4500" not in sample:
             # if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
-                continue
+            #    continue
 
             #if group != "other_mc":
             #    continue
             #if sample not in ["data_A"]:
             #    continue
-            # if group != "data":
+            #if group != "data":
             #    continue
             if group == "data":
                 datasets_data.append(sample)

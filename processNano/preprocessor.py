@@ -6,6 +6,7 @@ import tqdm
 import uproot
 
 from config.parameters import parameters
+from config.parameters import lumis
 from config.cross_sections import cross_sections
 
 
@@ -108,12 +109,17 @@ class SamplesInfo(object):
             from config.datasets_electron import datasets
         self.paths = datasets[self.year]
 
-        if "2016" in self.year:
-            self.lumi = 35900.0
-        elif "2017" in self.year:
-            self.lumi = 41530.0
-        elif "2018" in self.year:
-            self.lumi = 59970.0
+        if "mu" in datasets_from:
+            self.lumi = lumis[self.year][1]
+        else:
+            self.lumi = lumis[self.year][0]
+
+        #if "2016" in self.year:
+        #    self.lumi = 35900.0
+        #elif "2017" in self.year:
+        #    self.lumi = 41530.0
+        #elif "2018" in self.year:
+        #    self.lumi = 59970.0
 
         self.data_entries = 0
         self.sample = ""
@@ -202,7 +208,7 @@ class SamplesInfo(object):
                         nGenEvts += tree["genEventCount"].array()[0]
         metadata["sumGenWgts"] = sumGenWgts
         metadata["nGenEvts"] = nGenEvts
-
+        print (metadata)
         files = {"files": all_files, "treename": "Events"}
         return {
             "sample": sample,

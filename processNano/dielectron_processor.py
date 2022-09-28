@@ -144,7 +144,7 @@ class DielectronProcessor(processor.ProcessorABC):
 
         else:
             # For Data: apply Lumi mask
-            lumi_info = LumiMask(self.parameters["lumimask_Pre-UL_el"])
+            lumi_info = LumiMask(self.parameters["lumimask_UL_el"])
             mask = lumi_info(df.run, df.luminosityBlock)
 
         # Apply HLT to both Data and MC

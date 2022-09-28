@@ -1,10 +1,10 @@
 def for_all_years(value):
-    out = {k: value for k in ["2016", "2017", "2018"]}
+    out = {k: value for k in ["2016preVFP","2016postVFP", "2017", "2018"]}
     return out
 
 
 parameters = {}
-lumis = {"2016": 36.3, "2017": 42.1, "2018": 61.6}
+lumis = {"2016preVFP": [19.12,19.29], "2016postVFP": [16.81,17.01], "2017": [41.48,42.02], "2018": [59.83,61.31]}
 parameters["lumimask_Pre-UL_mu"] = {
     # "2016": "data/lumimasks/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt",
     # "2017": "data/lumimasks/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_v1.txt",
@@ -19,9 +19,15 @@ parameters["lumimask_Pre-UL_el"] = {
 }
 
 parameters["lumimask_UL_el"] = {
+    "2016preVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt",
+    "2016postVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt",
+    "2017": "data/lumimasks/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt",
     "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt",
 }
 parameters["lumimask_UL_mu"] = {
+    "2018preVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON_MuonPhys.txt",
+    "2016postVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON_MuonPhys.txt",
+    "2017": "data/lumimasks/Cert_294927-306462_13TeV_UL2017_Collisions17_MuonJSON.txt",
     "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON_MuonPhys.txt",
 }
 
@@ -32,8 +38,8 @@ parameters["mu_hlt"] = {
 }
 
 parameters["el_hlt"] = {
-    "2016": ["Mu50", "TkMu50"],
-    "2017": ["Mu50", "TkMu100", "OldMu100"],
+    "2016": ["DoubleEle33_CaloIdL_MW","HLT_DoubleEle33_CaloIdL_GsfTrkIdVL"],
+    "2017": ["DoubleEle33_CaloIdL_MW"],
     "2018": ["DoubleEle25_CaloIdL_MW"],
 }
 

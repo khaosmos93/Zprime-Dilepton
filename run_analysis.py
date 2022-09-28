@@ -47,11 +47,11 @@ else:
 parameters = {
     # < general settings >
     "slurm_cluster_ip": slurm_cluster_ip,
-    "global_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
+    "global_path": "/depot/cms/users/schul105/dilepton/Zprime-Dilepton/output/",
     "years": args.years,
     # "label": "moreKiller",
     # "label": "noGenWeight",
-    "label": "2018pre-UL_v2",
+    "label": "testSamples",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["inclusive", "bb", "be"],
     # "syst_variations": ["nominal"],
@@ -107,15 +107,40 @@ parameters["datasets"] = [
     # "data_F",
     # "data_G",
     # "data_H",
-    "dy120to200",
-    "dy200to400",
-    "dy400to800",
-    "dy800to1400",
-    "dy1400to2300",
-    "dy2300to3500",
-    "dy3500to4500",
-    "dy4500to6000",
-    "dy6000toInf",
+#    "dy120to200",
+#    "dy200to400",
+#    "dy400to800",
+#    "dy800to1400",
+#    "dy1400to2300",
+#    "dy2300to3500",
+#    "dy3500to4500",
+#    "dy4500to6000",
+#    "dy6000toInf",
+    "dy0J_M200to400",
+    "dy0J_M400to800",
+    "dy0J_M800to1400",
+    "dy0J_M1400to2300",
+    "dy0J_M2300to3500",
+    "dy0J_M3500to4500_of",
+    "dy0J_M3500to4500",
+    "dy0J_M4500to6000",
+    "dy0J_M6000toInf",
+    "dy1J_M200to400",
+    "dy1J_M400to800",
+    "dy1J_M800to1400",
+    "dy1J_M1400to2300",
+    "dy1J_M2300to3500",
+    "dy1J_M3500to4500",
+    "dy1J_M4500to6000",
+    "dy1J_M6000toInf",
+    "dy2J_M200to400",
+    "dy2J_M400to800",
+    "dy2J_M800to1400",
+    "dy2J_M1400to2300",
+    "dy2J_M2300to3500",
+    "dy2J_M3500to4500",
+    "dy2J_M4500to6000",
+    "dy2J_M6000toInf",
     "dyInclusive50",
     "ttbar_lep_inclusive",
     "ttbar_lep_M500to800",
@@ -132,7 +157,7 @@ parameters["datasets"] = [
     "WW200to600",
     "WW600to1200",
     "WW1200to2500",
-    "WW2500",
+    "WW2500toInf",
     "WZ2L2Q",
     "WZ3LNu",
     "ZZ2L2Nu",
@@ -205,8 +230,9 @@ if __name__ == "__main__":
         for dataset, path in tqdm.tqdm(all_paths[year].items()):
             if len(path) == 0:
                 continue
-            if "data" not in dataset:
-                continue
+            #if "data" not in dataset:
+            print ("????")
+            #    continue
             # read stage1 outputs
             df = load_dataframe(client, parameters, inputs=[path], dataset=dataset)
             if not isinstance(df, dd.DataFrame):
