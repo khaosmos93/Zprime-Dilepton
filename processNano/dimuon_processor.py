@@ -10,14 +10,11 @@ import numpy as np
 import pandas as pd
 import coffea.processor as processor
 from coffea.lumi_tools import LumiMask
+from processNano.timer import Timer
 from processNano.weights import Weights
 
 # correction helpers included from copperhead
 from copperhead.stage1.corrections.pu_reweight import pu_lookups, pu_evaluator
-
-# from copperhead.stage1.corrections.lepton_sf import musf_lookup
-
-# from copperhead.stage1.corrections.jec import jec_factories, apply_jec
 from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
 
 # from copperhead.stage1.corrections.lhe_weights import lhe_weights
@@ -26,6 +23,8 @@ from copperhead.stage1.corrections.l1prefiring_weights import l1pf_weights
 # high mass dilepton specific corrections
 from processNano.corrections.kFac import kFac
 from processNano.corrections.nnpdfWeight import NNPDFWeight
+from copperhead.stage1.corrections.jec import jec_factories, apply_jec
+from copperhead.config.jec_parameters import jec_parameters
 
 from processNano.jets import prepare_jets, fill_jets, fill_bjets, btagSF
 
@@ -36,66 +35,40 @@ from processNano.utils import bbangle
 
 from config.parameters import parameters, muon_branches, jet_branches
 
-from copperhead.config.jec_parameters import jec_parameters
-
-
 class DimuonProcessor(processor.ProcessorABC):
     def __init__(self, **kwargs):
         self.samp_info = kwargs.pop("samp_info", None)
-        do_timer = kwargs.pop("do_timer", False)
-        self.pt_variations = kwargs.get("pt_variations", ["nominal"])
+        do_timer = kwargs.pop("do_timer", True)
         self.apply_to_output = kwargs.pop("apply_to_output", None)
-
+        self.pt_variations = kwargs.pop("pt_variations", ["nominal"])
+ 
         self.year = self.samp_info.year
         self.parameters = {k: v[self.year] for k, v in parameters.items()}
 
-        # self.do_btag_syst = kwargs.pop("do_btag_syst", None)
         self.do_btag = True
-        # if self.do_btag_syst:
-        #    self.btag_systs = self.parameters["btag_systs"]
-        # else:
-        #    self.btag_systs = []
 
         if self.samp_info is None:
             print("Samples info missing!")
             return
+
+        self._accumulator = processor.defaultdict_accumulator(int)
+
         self.applykFac = True
         self.applyNNPDFWeight = True
         self.do_pu = True
         self.auto_pu = False
-        self.year = self.samp_info.year
         self.do_l1pw = True  # L1 prefiring weights
-        jec_pars = {k: v[self.year] for k, v in jec_parameters.items()}
         self.do_jecunc = True
         self.do_jerunc = False
-        for ptvar in self.pt_variations:
-            if ptvar in jec_pars["jec_variations"]:
-                self.do_jecunc = True
-            if ptvar in jec_pars["jer_variations"]:
-                self.do_jerunc = True
 
-        # self.timer = Timer("global") if do_timer else None
-        self.timer = None
+        self.timer = Timer("global") if do_timer else None
+
         self._columns = self.parameters["proc_columns"]
 
         self.regions = ["bb", "be"]
         self.channels = ["mumu"]
 
         self.lumi_weights = self.samp_info.lumi_weights
-        # if self.do_btag_syst:
-        #    self.btag_systs = [
-        #        "jes",
-        #        "lf",
-        #        "hfstats1",
-        #        "hfstats2",
-        #        "cferr1",
-        #        "cferr2",
-        #        "hf",
-        #        "lfstats1",
-        #        "lfstats2",
-        #    ]
-        # else:
-        #    self.btag_systs = []
 
         self.prepare_lookups()
 
@@ -653,19 +626,6 @@ class DimuonProcessor(processor.ProcessorABC):
             jets = jets.loc[pd.IndexSlice[:, :, 0], :]
             jets.index = jets.index.droplevel("subsubentry")
 
-        # if variation == "nominal":
-        # Update pt and mass if JEC was applied
-        #    if self.do_jec:
-        #        jets["pt"] = jets["pt_jec"]
-        #        jets["mass"] = jets["mass_jec"]
-
-        # We use JER corrections only for systematics, so we shouldn't
-        # update the kinematics. Use original values,
-        # unless JEC were applied.
-        # if is_mc and self.do_jerunc and not self.do_jec:
-        #    jets["pt"] = jets["pt_orig"]
-        #    jets["mass"] = jets["mass_orig"]
-
         # ------------------------------------------------------------#
         # Apply jetID
         # ------------------------------------------------------------#
@@ -675,20 +635,14 @@ class DimuonProcessor(processor.ProcessorABC):
             [jets.index.get_level_values(0), jets.groupby(level=0).cumcount()],
             names=["entry", "subentry"],
         )
-        # Select two jets with highest pT
-        # if is_mc:
-        #    variables["btag_sf_shape"] = (
-        #        jets.loc[jets.pre_selection == 1, "btag_sf_shape"]
-        #        .groupby("entry")
-        #        .prod()
-        #    )
-        #    variables["btag_sf_shape"] = variables["btag_sf_shape"].fillna(1.0)
+
+        jets = jets.dropna()
+        jets = jets.loc[:, ~jets.columns.duplicated()]
 
         if self.do_btag:
             if is_mc:
                 btagSF(jets, self.year, correction="shape", is_UL=True)
                 btagSF(jets, self.year, correction="wp", is_UL=True)
-                jets = jets.dropna()
 
                 variables["wgt_nominal"] = (
                     jets.loc[jets.pre_selection == 1, "btag_sf_wp"]
@@ -718,25 +672,10 @@ class DimuonProcessor(processor.ProcessorABC):
                     "wgt_btag_down"
                 ] * weights.get_weight("nominal")
 
-                for s in ["_up", "_down"]:
-
-                    variables["wgt_recowgt" + s] = (
-                        jets.loc[jets.pre_selection == 1, "btag_sf_wp"]
-                        .groupby("entry")
-                        .prod()
-                    )
-                    variables["wgt_recowgt" + s] = variables["wgt_recowgt" + s].fillna(
-                        1.0
-                    )
-                    variables["wgt_recowgt" + s] = variables[
-                        "wgt_recowgt" + s
-                    ] * weights.get_weight("recowgt" + s)
             else:
                 variables["wgt_nominal"] = 1.0
                 variables["wgt_btag_up"] = 1.0
                 variables["wgt_btag_down"] = 1.0
-                variables["wgt_recowgt_up"] = 1.0
-                variables["wgt_recowgt_down"] = 1.0
         else:
             if is_mc:
                 variables["wgt_nominal"] = 1.0
@@ -744,16 +683,8 @@ class DimuonProcessor(processor.ProcessorABC):
                     "wgt_nominal"
                 ] * weights.get_weight("nominal")
 
-                for s in ["_up", "_down"]:
-
-                    variables["wgt_recowgt" + s] = 1.0
-                    variables["wgt_recowgt" + s] = variables[
-                        "wgt_recowgt" + s
-                    ] * weights.get_weight("recowgt" + s)
             else:
                 variables["wgt_nominal"] = 1.0
-                variables["wgt_recowgt_up"] = 1.0
-                variables["wgt_recowgt_down"] = 1.0
 
         jets["selection"] = 0
         jets.loc[
@@ -794,31 +725,9 @@ class DimuonProcessor(processor.ProcessorABC):
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")
 
-        # ------------------------------------------------------------#
-        # Calculate btag SF
-        # ------------------------------------------------------------#
-        # --- Btag weights --- #
-        # if is_mc:
-        # bjet_sel_mask = output.event_selection
-
-        # btag_wgt, btag_syst = btag_weights(
-        #    self, self.btag_lookup, self.btag_systs, jets, weights, bjet_sel_mask
-        # )
-        # weights.add_weight("btag_wgt", btag_wgt)
-
-        # --- Btag weights variations --- #
-        # for name, bs in btag_syst.items():
-        #    weights.add_weight(f"btag_wgt_{name}", bs, how="only_vars")
-
-        # if self.timer:
-        #    self.timer.add_checkpoint(
-        #        "Applied B-tag weights"
-        #    )
-
         # --------------------------------------------------------------#
         # Fill outputs
         # --------------------------------------------------------------#
-        # variables.update({"wgt_nominal": weights.get_weight("nominal")})
         # All variables are affected by jet pT because of jet selections:
         # a jet may or may not be selected depending on pT variation.
 
@@ -831,6 +740,7 @@ class DimuonProcessor(processor.ProcessorABC):
         del bjets
         del mu1
         del mu2
+
         return output
 
     def prepare_lookups(self):

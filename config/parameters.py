@@ -2,9 +2,8 @@ def for_all_years(value):
     out = {k: value for k in ["2016preVFP","2016postVFP", "2017", "2018"]}
     return out
 
-
 parameters = {}
-lumis = {"2016preVFP": [19.12,19.29], "2016postVFP": [16.81,17.01], "2017": [41.48,42.02], "2018": [59.83,61.31]}
+lumis = {"2016preVFP": [19.12*1000,19.29*1000], "2016postVFP": [16.81*1000,17.01*1000], "2017": [41.48*1000,42.02*1000], "2018": [59.83*1000,61.31*1000]}
 parameters["lumimask_Pre-UL_mu"] = {
     # "2016": "data/lumimasks/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt",
     # "2017": "data/lumimasks/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_v1.txt",

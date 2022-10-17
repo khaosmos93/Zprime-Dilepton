@@ -49,6 +49,19 @@ massBinningMuMu = (
 
 variables.append(
     Variable(
+        "dielectron_mass",
+        r"$m_{ee}$ [GeV]",
+        len(massBinningMuMu) - 1,
+        200,
+        4900,
+        1e-5,
+        1e5,
+        binning_=massBinningMuMu,
+        norm_to_bin_width_=True,
+    )
+)
+variables.append(
+    Variable(
         "dimuon_mass",
         r"$m_{\mu\mu}$ [GeV]",
         len(massBinningMuMu) - 1,

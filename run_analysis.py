@@ -22,6 +22,9 @@ parser.add_argument(
     "-y", "--years", nargs="+", help="Years to process", default=["2018"]
 )
 parser.add_argument(
+    "-f", "--flavor", dest="flavor", help="lepton flavor", default="mu"
+)
+parser.add_argument(
     "-sl",
     "--slurm",
     dest="slurm_port",
@@ -33,7 +36,7 @@ args = parser.parse_args()
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
-node_ip = "128.211.148.60"
+node_ip = "128.211.148.61"
 
 if use_local_cluster:
     ncpus_local = 40
@@ -51,7 +54,8 @@ parameters = {
     "years": args.years,
     # "label": "moreKiller",
     # "label": "noGenWeight",
-    "label": "testSamples",
+    "label": "weightTest",
+    "flavor": args.flavor,
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["inclusive", "bb", "be"],
     # "syst_variations": ["nominal"],
@@ -98,6 +102,11 @@ parameters = {
     "bdt_models": {},
     "mva_bins_original": mva_bins,
 }
+
+if args.flavor == "el":
+   parameters["hist_vars"] = ["dielectron_mass"]
+   parameters["hist_vars_2d"] = [["dielectron_mass","met"]]
+
 parameters["datasets"] = [
     "data_A",
     "data_B",
