@@ -47,16 +47,29 @@ massBinningMuMu = (
     + [6070]
 )
 
+massBinningEE = (
+    [j for j in range(120, 150, 5)]
+    + [j for j in range(150, 200, 10)]
+    + [j for j in range(200, 600, 20)]
+    + [j for j in range(600, 900, 30)]
+    + [j for j in range(900, 1250, 50)]
+    + [j for j in range(1250, 1610, 60)]
+    + [j for j in range(1610, 1890, 70)]
+    + [j for j in range(1890, 3970, 80)]
+    + [j for j in range(3970, 6070, 100)]
+    + [6070]
+)
+
 variables.append(
     Variable(
         "dielectron_mass",
         r"$m_{ee}$ [GeV]",
-        len(massBinningMuMu) - 1,
+        len(massBinningEE) - 1,
         200,
         4900,
         1e-5,
         1e5,
-        binning_=massBinningMuMu,
+        binning_=massBinningEE,
         norm_to_bin_width_=True,
     )
 )
@@ -127,6 +140,20 @@ variables.append(
 )
 
 variables.append(
+    Variable(
+        "dielectron_mass_gen",
+        r"generated $m_{ee}$ [GeV]",
+        len(massBinningEE) - 1,
+        200,
+        4900,
+        1e-5,
+        1e5,
+        binning_=massBinningEE,
+        norm_to_bin_width_=True,
+    )
+)
+
+variables.append(
     Variable("bmmj1_mass", r"m(\ell\ell b) [GeV]", 200, 0, 4000, 1e-5, 1e5)
 )
 variables.append(Variable("min_bl_mass", r"min m(l,b) [GeV]", 100, 0, 600, 1e-5, 1e5))
@@ -143,7 +170,7 @@ variables.append(
     Variable("met", r"$E_{\mathrm{T}}^{\mathrm{miss}} [GeV]$", 20, 0, 200, 0.5, 1e6)
 )
 variables.append(
-    Variable("dimuon_cos_theta_cs", r"$cos\theta_{\mathrm{CS}}$", 20, -1, 1, 0.5, 1e6)
+    Variable("dilepton_cos_theta_cs", r"$cos\theta_{\mathrm{CS}}$", 20, -1, 1, 0.5, 1e6)
 )
 variables.append(
     Variable("bjet1_pt", r"bjet1 p_T [GeV]",100, 0, 500, 1e-5, 1e5)
@@ -156,7 +183,14 @@ variables.append(
 )
 variables.append(
     Variable("mu2_pt", r"\mu_{2) p_T [GeV]",100, 0, 500, 1e-5, 1e5)
+)
+variables.append(
+    Variable("e1_pt", r"e_{1} p_T [GeV]",100, 0, 500, 1e-5, 1e5)
+)
+variables.append(
+    Variable("e2_pt", r"e_{2) p_T [GeV]",100, 0, 500, 1e-5, 1e5)
 )   
+  
 variables_lookup = {}
 for v in variables:
     variables_lookup[v.name] = v

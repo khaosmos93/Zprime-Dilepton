@@ -6,7 +6,6 @@ import awkward
 import awkward as ak
 import numpy as np
 
-# np.set_printoptions(threshold=sys.maxsize)
 import pandas as pd
 import coffea.processor as processor
 from coffea.lumi_tools import LumiMask
@@ -432,8 +431,13 @@ class DimuonProcessor(processor.ProcessorABC):
 
         output["year"] = int(self.year)
 
-        # for wgt in weights.df.columns:
-        #    output[f"wgt_{wgt}"] = weights.get_weight(wgt)
+        for wgt in weights.df.columns:
+            if wgt == "pu_wgt_off":
+                output["pu_wgt"] = weights.get_weight(wgt)
+            if wgt != "nominal":
+                output[f"wgt_{wgt}"] = weights.get_weight(wgt)
+
+
         if is_mc and "dy" in dataset and self.applykFac:
             mass_bb = output[output["r"] == "bb"].dimuon_mass_gen.to_numpy()
             mass_be = output[output["r"] == "be"].dimuon_mass_gen.to_numpy()
@@ -530,6 +534,7 @@ class DimuonProcessor(processor.ProcessorABC):
         output = output.reindex(sorted(output.columns), axis=1)
         output = output[output.r.isin(self.regions)]
         output.columns = output.columns.droplevel("Variation")
+
         if self.timer:
             self.timer.add_checkpoint("Filled outputs")
             self.timer.summary()

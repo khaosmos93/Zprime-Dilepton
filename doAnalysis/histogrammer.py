@@ -112,7 +112,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
                 & (~((df.dataset == "ttbar_lep_inclusive") & (df.dielectron_mass_gen > 500)))
                 & (~((df.dataset == "WWinclusive") & (df.dielectron_mass_gen > 200)))
            )
-
+        print (df["dielectron_mass"].loc[df["dielectron_mass"] > 120])
         data = df.loc[slicer, var_name]
         weight = df.loc[slicer, w]
         if var.norm_to_bin_width:

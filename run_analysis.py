@@ -83,7 +83,7 @@ parameters = {
         "dimuon_mass_gen",
         "njets",
         "nbjets",
-        "dimuon_cos_theta_cs",
+        "dilepton_cos_theta_cs",
     ],
     "hist_vars_2d": [["dimuon_mass", "met"]],
     "variables_lookup": variables_lookup,
@@ -104,8 +104,18 @@ parameters = {
 }
 
 if args.flavor == "el":
-   parameters["hist_vars"] = ["dielectron_mass"]
-   parameters["hist_vars_2d"] = [["dielectron_mass","met"]]
+    parameters["hist_vars"] = [
+        "min_bl_mass",
+        "min_b1l_mass",
+        "min_b2l_mass",
+        "dielectron_mass",
+        "dielectron_mass_gen",
+        "njets",
+        "nbjets",
+        "dilepton_cos_theta_cs",
+
+    ]
+    parameters["hist_vars_2d"] = [["dielectron_mass","met"]]
 
 parameters["datasets"] = [
     "data_A",
@@ -130,7 +140,6 @@ parameters["datasets"] = [
     "dy0J_M800to1400",
     "dy0J_M1400to2300",
     "dy0J_M2300to3500",
-    "dy0J_M3500to4500_of",
     "dy0J_M3500to4500",
     "dy0J_M4500to6000",
     "dy0J_M6000toInf",
@@ -240,7 +249,6 @@ if __name__ == "__main__":
             if len(path) == 0:
                 continue
             #if "data" not in dataset:
-            print ("????")
             #    continue
             # read stage1 outputs
             df = load_dataframe(client, parameters, inputs=[path], dataset=dataset)
@@ -249,4 +257,3 @@ if __name__ == "__main__":
 
             # run processing sequence (categorization, mva, histograms)
             info = process_partitions(client, parameters, df)
-            print(info)

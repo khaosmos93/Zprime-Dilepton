@@ -14,6 +14,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "-y", "--years", nargs="+", help="Years to process", default=["2018"]
 )
+
+parser.add_argument(
+    "-f", "--flavor", dest="flavor", help="lepton flavor", default="mu"
+)
+
+
 parser.add_argument(
     "-sl",
     "--slurm",
@@ -41,8 +47,8 @@ parameters = {
     # < general settings >
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
-    "global_path": "/depot/cms/users/minxi/NanoAOD_study/Zprime-Dilepton/output/",
-    "label": "2018pre-UL_v2",
+    "global_path": "/depot/cms/users/schul105/dilepton/Zprime-Dilepton/output/",
+    "label": "weightTest",
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["inclusive", "bb", "be"],
     "syst_variations": ["nominal"],
@@ -62,7 +68,7 @@ parameters = {
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
-    "plots_path": "./plots/2018pre-UL/",
+    "plots_path": "./plots/Dielectron/",
     "dnn_models": {},
     "bdt_models": {},
     #
@@ -77,6 +83,19 @@ parameters = {
     ],  # "dimuon_mass"],
 }
 
+if args.flavor == "ele":
+    parameters["plot_vars"] = [
+        "min_bl_mass",
+        "min_b1l_mass",
+        "min_b2l_mass",
+        "dielectron_mass",
+        "dielectron_mass_gen",
+        "njets",
+        "nbjets",
+        "dielectron_cos_theta_cs",
+
+]
+
 parameters["grouping"] = {
     "data_A": "Data",
     "data_B": "Data",
@@ -86,15 +105,30 @@ parameters["grouping"] = {
     # "data_F": "Data",
     # "data_G": "Data",
     # "data_H": "Data",
-    "dy120to200": "DY",
-    "dy200to400": "DY",
-    "dy400to800": "DY",
-    "dy800to1400": "DY",
-    "dy1400to2300": "DY",
-    "dy2300to3500": "DY",
-    "dy3500to4500": "DY",
-    "dy4500to6000": "DY",
-    "dy6000toInf": "DY",
+    "dy0J_M200to400": "DY",
+    "dy0J_M400to800": "DY",
+    "dy0J_M800to1400": "DY",
+    "dy0J_M1400to2300": "DY",
+    "dy0J_M2300to3500": "DY",
+    "dy0J_M3500to4500": "DY",
+    "dy0J_M4500to6000": "DY",
+    "dy0J_M6000toInf": "DY",
+    "dy1J_M200to400": "DY",
+    "dy1J_M400to800": "DY",
+    "dy1J_M800to1400": "DY",
+    "dy1J_M1400to2300": "DY",
+    "dy1J_M2300to3500": "DY",
+    "dy1J_M3500to4500": "DY",
+    "dy1J_M4500to6000": "DY",
+    "dy1J_M6000toInf": "DY",
+    "dy2J_M200to400": "DY",
+    "dy2J_M400to800": "DY",
+    "dy2J_M800to1400": "DY",
+    "dy2J_M1400to2300": "DY",
+    "dy2J_M2300to3500": "DY",
+    "dy2J_M3500to4500": "DY",
+    "dy2J_M4500to6000": "DY",
+    "dy2J_M6000toInf": "DY",
     "ttbar_lep_inclusive": "Top",
     "ttbar_lep_M500to800": "Top",
     "ttbar_lep_M800to1200": "Top",
@@ -113,7 +147,6 @@ parameters["grouping"] = {
     "WZ3LNu": "Other",
     "ZZ2L2Nu": "Other",
     "ZZ4L": "Other",
-    "dyInclusive50": "DYTauTau",
     # "bbll_4TeV_M400_posLL" : "bbll_4TeV_posLL",
     # "bbll_4TeV_M1000_posLL" : "bbll_4TeV_posLL",
     # "bbll_8TeV_M400_posLL" : "bbll_8TeV_posLL",
@@ -121,7 +154,7 @@ parameters["grouping"] = {
 }
 
 parameters["plot_groups"] = {
-    "stack": ["DY", "Top", "Other", "WW", "DYTauTau"],
+    "stack": ["DY", "Top", "Other", "WW"],
     # "step": ["bbll_4TeV_posLL", "bbll_8TeV_posLL"],
     "errorbar": ["Data"],
     # "2D": ["Data","DY","Other","bbll_4TeV_posLL","bbll_8TeV_posLL"],

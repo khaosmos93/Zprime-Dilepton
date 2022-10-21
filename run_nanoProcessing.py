@@ -155,7 +155,6 @@ def submit_job(parameters):
         out_dir = parameters["global_path"] + parameters["out_path"]
     else:
         out_dir = parameters["global_path"]
-    print(out_dir)
     mkdir(out_dir)
     out_dir += "/" + parameters["label"]
     mkdir(out_dir)
@@ -282,30 +281,30 @@ if __name__ == "__main__":
             "bsll_lambda8TeV_M1000to2000",
             "bsll_lambda8TeV_M2000toInf",
  
-            "bbll_6TeV_M1300To2000_negLL",
-            "bbll_6TeV_M2000ToInf_negLL",
-            "bbll_6TeV_M300To800_negLL",
-            "bbll_6TeV_M800To1300_negLL",
-            "bbll_10TeV_M1300To2000_negLL",
-            "bbll_10TeV_M2000ToInf_negLL",
-            "bbll_10TeV_M300To800_negLL",
-            "bbll_10TeV_M800To1300_negLL",
-            "bbll_14TeV_M1300To2000_negLL",
-            "bbll_14TeV_M2000ToInf_negLL",
-            "bbll_14TeV_M300To800_negLL",
-            "bbll_14TeV_M800To1300_negLL",
-            "bbll_18TeV_M1300To2000_negLL",
-            "bbll_18TeV_M2000ToInf_negLL",
-            "bbll_18TeV_M300To800_negLL",
-            "bbll_18TeV_M800To1300_negLL",
-            "bbll_22TeV_M1300To2000_negLL",
-            "bbll_22TeV_M2000ToInf_negLL",
-            "bbll_22TeV_M300To800_negLL",
-            "bbll_22TeV_M800To1300_negLL",
-            "bbll_24TeV_M1300To2000_negLL",
-            "bbll_24TeV_M2000ToInf_negLL",
-            "bbll_24TeV_M300To800_negLL",
-            "bbll_24TeV_M800To1300_negLL",
+            #"bbll_6TeV_M1300To2000_negLL",
+            #"bbll_6TeV_M2000ToInf_negLL",
+            #"bbll_6TeV_M300To800_negLL",
+            #"bbll_6TeV_M800To1300_negLL",
+            #"bbll_10TeV_M1300To2000_negLL",
+            #"bbll_10TeV_M2000ToInf_negLL",
+            #"bbll_10TeV_M300To800_negLL",
+            #"bbll_10TeV_M800To1300_negLL",
+            #"bbll_14TeV_M1300To2000_negLL",
+            #"bbll_14TeV_M2000ToInf_negLL",
+            #"bbll_14TeV_M300To800_negLL",
+            #"bbll_14TeV_M800To1300_negLL",
+            #"bbll_18TeV_M1300To2000_negLL",
+            #"bbll_18TeV_M2000ToInf_negLL",
+            #"bbll_18TeV_M300To800_negLL",
+            #"bbll_18TeV_M800To1300_negLL",
+            #"bbll_22TeV_M1300To2000_negLL",
+            #"bbll_22TeV_M2000ToInf_negLL",
+            #"bbll_22TeV_M300To800_negLL",
+            #"bbll_22TeV_M800To1300_negLL",
+            #"bbll_24TeV_M1300To2000_negLL",
+            #"bbll_24TeV_M2000ToInf_negLL",
+            #"bbll_24TeV_M300To800_negLL",
+            #"bbll_24TeV_M800To1300_negLL",
         ],
     }
     if parameters["year"] == "2018":
@@ -365,16 +364,17 @@ if __name__ == "__main__":
             # if "dy200to400" not in sample:
             # if sample != "ttbar_lep_inclusive":
             #    continue
-            if "tW" not in sample:
+            #if "dy0J_M6000toInf" not in sample:
+            #if "data_A" not in sample:
             # if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
-                continue
+            #    continue
 
             #if group != "other_mc":
             #    continue
             #if sample not in ["data_A"]:
             #    continue
-            #if group != "data":
-            #    continue
+            if group != "data":
+                continue
             if group == "data":
                 datasets_data.append(sample)
             else:
@@ -398,7 +398,6 @@ if __name__ == "__main__":
         out = submit_job(parameters)
         timings[f"process {lbl}"] = time.time() - tick2
 
-        print(out)
 
     elapsed = round(time.time() - tick, 3)
     print(f"Finished everything in {elapsed} s.")

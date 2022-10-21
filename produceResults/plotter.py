@@ -89,7 +89,6 @@ def plotter(client, parameters, hist_df=None, timer=None):
             "var_name": parameters["plot_vars"],
             "dataset": parameters["datasets"],
         }
-        print(arg_load)
         hist_dfs = parallelize(load_stage2_output_hists, arg_load, client, parameters)
         hist_df = pd.concat(hist_dfs).reset_index(drop=True)
         if hist_df.shape[0] == 0:
@@ -140,7 +139,7 @@ def plotter2D(client, parameters, hist_df=None, timer=None):
         ],
         "df": [hist_df],
     }
-    yields = parallelize(plot2D, arg_plot, client, parameters, seq=True)
+    yields = parallelize(plot2D, arg_plot, client, parameters, seq=False)
     return yields
 
 
@@ -192,7 +191,6 @@ def plot(args, parameters={}):
     for wgt in variation:
         slicer = {"region": region, "channel": channel, "variation": wgt}
         for entry in entries.values():
-            print(entry)
             if len(entry.entry_list) == 0:
                 continue
             plottables_df = get_plottables(hist, entry, year, var_name, slicer)
@@ -213,9 +211,7 @@ def plot(args, parameters={}):
             #        labels_new = [label]
             #        colors = ["r"]
 
-            # print(labels_new)
             total_yield += sum([p.sum() for p in plottables])
-            print(total_yield)
             if len(plottables) == 0:
                 continue
             yerr = np.sqrt(sum(plottables).values()) if entry.yerr else None
@@ -243,7 +239,6 @@ def plot(args, parameters={}):
                         y2=np.r_[err[1, :], err[1, -1]],
                         **stat_err_opts,
                     )
-    print(parameters["plot_vars"])
     if parameters["plot_vars"]:
         ax2 = fig.add_subplot(gs[1], sharex=ax1)
         num = den = []

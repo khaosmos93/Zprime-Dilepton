@@ -35,7 +35,6 @@ def load_sample(dataset, parameters):
 
 
 def load_samples(datasets, parameters):
-    print(parameters["year"])
     args = {
         "year": parameters["year"],
         "out_path": parameters["out_path"],
@@ -63,14 +62,12 @@ def load_samples(datasets, parameters):
 
 def read_via_xrootd(server, path, from_das=False):
     if from_das:
-        print(path)
         if "USER" in path:
             command = f'dasgoclient --query=="file dataset={path} instance=prod/phys03"'
         else:
             command = f'dasgoclient --query=="file dataset={path}"'
     else:
         command = f"xrdfs {server} ls -R {path} | grep '.root'"
-    print(command)
     proc = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
@@ -102,7 +99,6 @@ class SamplesInfo(object):
             except Exception:
                 print(k, v)
         self.is_mc = True
-        print(datasets_from)
         if "mu" in datasets_from:
             from config.datasets_muon import datasets
         elif "el" in datasets_from:
@@ -164,8 +160,6 @@ class SamplesInfo(object):
         elif self.paths[sample].endswith(".root"):
             all_files = [self.paths[sample]]
         else:
-            print("check")
-            print(self.paths[sample])
             all_files = [
                 self.server + f for f in glob.glob(self.paths[sample] + "/**/**/*.root")
             ]
@@ -208,7 +202,6 @@ class SamplesInfo(object):
                         nGenEvts += tree["genEventCount"].array()[0]
         metadata["sumGenWgts"] = sumGenWgts
         metadata["nGenEvts"] = nGenEvts
-        print (metadata)
         files = {"files": all_files, "treename": "Events"}
         return {
             "sample": sample,
@@ -247,7 +240,6 @@ class SamplesInfo(object):
                 self.lumi_weights[self.sample] = xsec * self.lumi / N
             else:
                 self.lumi_weights[self.sample] = 0
-            # print(f"{self.sample}: events={numevents}")
             return numevents
         else:
             return self.data_entries

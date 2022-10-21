@@ -6,7 +6,6 @@ import awkward
 import awkward as ak
 import numpy as np
 
-# np.set_printoptions(threshold=sys.maxsize)
 import pandas as pd
 import coffea.processor as processor
 #from coffea.lookup_tools import extractor
@@ -80,7 +79,9 @@ class DielectronProcessor(processor.ProcessorABC):
         # Dataset name (see definitions in config/datasets.py)
         dataset = df.metadata["dataset"]
 
-        is_mc = "data" not in dataset
+        is_mc = True
+        if "data" in dataset:
+            is_mc = False
 
         # ------------------------------------------------------------#
         # Apply HLT, lumimask, genweights, PU weights
@@ -234,8 +235,13 @@ class DielectronProcessor(processor.ProcessorABC):
                 .groupby("entry")["subentry"]
                 .nunique()
             )
-            output["event_selection"] = mask & (hlt > 0) & (nelectrons >= 2)
-
+            if is_mc:
+                output["event_selection"] = mask & (hlt > 0) & (nelectrons >= 2)
+                output["event_selection"] = mask & (hlt > 0) & (nelectrons >= 2)
+            else:
+                output["event_selection"] = mask & (hlt > 0) & (nelectrons >= 4)
+                output["event_selection"] = mask & (hlt > 0) & (nelectrons >= 4)
+                
             if self.timer:
                 self.timer.add_checkpoint("Selected events and electrons")
 
@@ -243,7 +249,10 @@ class DielectronProcessor(processor.ProcessorABC):
             # Initialize electron variables
             # --------------------------------------------------------#
 
-            electrons = electrons[electrons.selection & (nelectrons >= 2)]
+            if is_mc:
+                electrons = electrons[electrons.selection & (nelectrons >= 2)]
+            else:
+                electrons = electrons[electrons.selection & (nelectrons >= 4)]
 
             if self.timer:
                 self.timer.add_checkpoint("electron object selection")
@@ -400,11 +409,6 @@ class DielectronProcessor(processor.ProcessorABC):
             if wgt != "nominal":
                 output[f"wgt_{wgt}"] = weights.get_weight(wgt)
 
-        output = output.loc[output.event_selection, :]
-        output = output.reindex(sorted(output.columns), axis=1)
-        output = output[output.r.isin(self.regions)]
-        output.columns = output.columns.droplevel("Variation")
-
 
         if is_mc and "dy" in dataset:
             mass_bb = output[output["r"] == "bb"].dielectron_mass_gen.to_numpy()
@@ -498,7 +502,10 @@ class DielectronProcessor(processor.ProcessorABC):
                     )
                 ).values
 
-
+        output = output.loc[output.event_selection, :]
+        output = output.reindex(sorted(output.columns), axis=1)
+        output = output[output.r.isin(self.regions)]
+        output.columns = output.columns.droplevel("Variation")
 
         if self.timer:
             self.timer.add_checkpoint("Filled outputs")

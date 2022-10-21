@@ -72,7 +72,7 @@ def p4(obj, is_mc=True):
     return result
 
 
-def p4_sum(obj1, obj2, is_mc=True):
+def p4_sum(obj1, obj2, is_mc=True,eScale="Nominal"):
 
     result = pd.DataFrame(
         index=obj1.index.union(obj2.index),
@@ -96,10 +96,51 @@ def p4_sum(obj1, obj2, is_mc=True):
             "rap",
         ],
     ).fillna(0.0)
+    
     for obj in [obj1, obj2]:
-        px_ = obj.pt * np.cos(obj.phi)
-        py_ = obj.pt * np.sin(obj.phi)
-        pz_ = obj.pt * np.sinh(obj.eta)
+        #electron energy scale uncertainty, 2% for barrel electrons and 1% for endcap electrons (to be revisited for UL)
+        obj["eScaleFac"] = 1.0
+        if eScale == "Up":
+            if not len(obj.loc[abs(obj.eta < 1.442)]) == 0:
+                obj.loc[
+                     (abs(obj.eta < 1.442)),
+                    "eScaleFac",
+                ] = 1.02
+            if not len(obj.loc[abs(obj.eta > 1.442)]) == 0:
+                obj.loc[
+                     (abs(obj.eta > 1.442)),
+                    "eScaleFac",
+                ] = 1.01
+        elif eScale == "Down":
+            if not len(obj.loc[abs(obj.eta < 1.442)]) == 0:
+                obj.loc[
+                     (abs(obj.eta < 1.442)),
+                    "eScaleFac",
+                ] = 0.98
+            if not len(obj.loc[abs(obj.eta > 1.442)]) == 0:
+                obj.loc[
+                     (abs(obj.eta > 1.442)),
+                    "eScaleFac",
+                ] = 0.99
+        #else:
+        #    if not len(obj.loc[abs(obj.eta < 1.442)]) == 0:
+        #        obj.loc[
+        #             (abs(obj.eta < 1.442)),
+        #            "eScaleFac",
+        #        ] = 1.0
+        #    if not len(obj.loc[abs(obj.eta > 1.442)]) == 0:
+        #        obj.loc[
+        #             (abs(obj.eta > 1.442)),
+        #            "eScaleFac",
+        #        ] = 1.0
+
+
+
+
+
+        px_ = obj.pt * np.cos(obj.phi) * obj.eScaleFac
+        py_ = obj.pt * np.sin(obj.phi) * obj.eScaleFac
+        pz_ = obj.pt * np.sinh(obj.eta) * obj.eScaleFac
         e_ = np.sqrt(px_ ** 2 + py_ ** 2 + pz_ ** 2 + obj.mass ** 2)
         result.px += px_
         result.py += py_
