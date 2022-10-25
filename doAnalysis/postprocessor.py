@@ -2,7 +2,7 @@ import dask.dataframe as dd
 import pandas as pd
 
 from copperhead.python.workflow import parallelize
-from copperhead.python.io import (
+from python.io import (
     delete_existing_stage2_hists,
     delete_existing_stage2_parquet,
     save_stage2_output_parquet,

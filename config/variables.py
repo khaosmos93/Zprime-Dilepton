@@ -75,7 +75,7 @@ variables.append(
 )
 variables.append(
     Variable(
-        "dimuon_mass",
+        "dilepton_mass",
         r"$m_{\mu\mu}$ [GeV]",
         len(massBinningMuMu) - 1,
         200,
@@ -88,7 +88,7 @@ variables.append(
 )
 variables.append(
     Variable(
-        "dimuon_mass_resUnc",
+        "dilepton_mass_resUnc",
         r"$m_{\mu\mu}$ [GeV] (res. unc.)",
         len(massBinningMuMu) - 1,
         200,
@@ -101,7 +101,7 @@ variables.append(
 )
 variables.append(
     Variable(
-        "dimuon_mass_scaleUncUp",
+        "dilepton_mass_scaleUncUp",
         r"$m_{\mu\mu}$ [GeV] (scale unc. up)",
         len(massBinningMuMu) - 1,
         200,
@@ -114,7 +114,7 @@ variables.append(
 )
 variables.append(
     Variable(
-        "dimuon_mass_scaleUncDown",
+        "dilepton_mass_scaleUncDown",
         r"$m_{\mu\mu}$ [GeV] (scale unc. down)",
         len(massBinningMuMu) - 1,
         200,
@@ -127,7 +127,7 @@ variables.append(
 )
 variables.append(
     Variable(
-        "dimuon_mass_gen",
+        "dilepton_mass_gen",
         r"generated $m_{\mu\mu}$ [GeV]",
         len(massBinningMuMu) - 1,
         200,

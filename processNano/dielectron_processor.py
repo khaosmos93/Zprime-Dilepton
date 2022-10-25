@@ -273,7 +273,7 @@ class DielectronProcessor(processor.ProcessorABC):
             result = electrons.groupby("entry").apply(find_dielectron, is_mc=is_mc)
             if is_mc:
                 dielectron = pd.DataFrame(
-                    result.to_list(), columns=["idx1", "idx2", "mass", "mass_gen"]
+                    result.to_list(), columns=["idx1", "idx2", "mass"]
                 )
             else:
                 dielectron = pd.DataFrame(
@@ -662,13 +662,13 @@ class DielectronProcessor(processor.ProcessorABC):
         bjet2 = bjets.groupby("entry").nth(1)
         bJets = [bjet1, bjet2]
         electrons = [e1, e2]
-        fill_bjets(output, variables, bJets, electrons, flavor="ele", is_mc=is_mc)
+        fill_bjets(output, variables, bJets, electrons, is_mc=is_mc)
 
         jets = jets.sort_values(["entry", "pt"], ascending=[True, False])
         jet1 = jets.groupby("entry").nth(0)
         jet2 = jets.groupby("entry").nth(1)
         Jets = [jet1, jet2]
-        fill_jets(output, variables, Jets, flavor="ele",  is_mc=is_mc)
+        fill_jets(output, variables, Jets,  is_mc=is_mc)
         if self.timer:
             self.timer.add_checkpoint("Filled jet variables")
 

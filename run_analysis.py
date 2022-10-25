@@ -8,7 +8,7 @@ import dask
 from dask.distributed import Client
 import dask.dataframe as dd
 
-from copperhead.python.io import load_dataframe
+from python.io import load_dataframe
 from doAnalysis.postprocessor import process_partitions
 
 from copperhead.config.mva_bins import mva_bins
@@ -36,7 +36,7 @@ args = parser.parse_args()
 
 # Dask client settings
 use_local_cluster = args.slurm_port is None
-node_ip = "128.211.148.61"
+node_ip = "128.211.148.60"
 
 if use_local_cluster:
     ncpus_local = 40
@@ -54,7 +54,7 @@ parameters = {
     "years": args.years,
     # "label": "moreKiller",
     # "label": "noGenWeight",
-    "label": "weightTest",
+    "label": "combinedTest",
     "flavor": args.flavor,
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["inclusive", "bb", "be"],
@@ -79,20 +79,20 @@ parameters = {
         "min_bl_mass",
         "min_b1l_mass",
         "min_b2l_mass",
-        "dimuon_mass",
-        "dimuon_mass_gen",
+        "dilepton_mass",
+        "dilepton_mass_gen",
         "njets",
         "nbjets",
         "dilepton_cos_theta_cs",
     ],
-    "hist_vars_2d": [["dimuon_mass", "met"]],
+    "hist_vars_2d": [["dilepton_mass", "met"]],
     "variables_lookup": variables_lookup,
     "save_hists": True,
     #
     # < settings for unbinned output>
     "tosave_unbinned": {
-        "bb": ["dimuon_mass", "event", "wgt_nominal"],
-        "be": ["dimuon_mass", "event", "wgt_nominal"],
+        "bb": ["dilepton_mass", "event", "wgt_nominal"],
+        "be": ["dilepton_mass", "event", "wgt_nominal"],
     },
     "save_unbinned": True,
     #
@@ -102,20 +102,6 @@ parameters = {
     "bdt_models": {},
     "mva_bins_original": mva_bins,
 }
-
-if args.flavor == "el":
-    parameters["hist_vars"] = [
-        "min_bl_mass",
-        "min_b1l_mass",
-        "min_b2l_mass",
-        "dielectron_mass",
-        "dielectron_mass_gen",
-        "njets",
-        "nbjets",
-        "dilepton_cos_theta_cs",
-
-    ]
-    parameters["hist_vars_2d"] = [["dielectron_mass","met"]]
 
 parameters["datasets"] = [
     "data_A",
@@ -237,7 +223,7 @@ if __name__ == "__main__":
         for dataset in parameters["datasets"]:
             paths = glob.glob(
                 f"{parameters['global_path']}/"
-                f"{parameters['label']}/stage1_output/{year}/"
+                f"{parameters['label']}/stage1_output_{parameters['flavor']}/{year}/"
                 f"{dataset}/*.parquet"
             )
             all_paths[year][dataset] = paths

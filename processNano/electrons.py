@@ -29,7 +29,7 @@ def find_dielectron(objs, is_mc=True):
                 dmass = abs(mass - 91.1876)
                 idx1 = objs.iloc[i].el_idx
                 idx2 = objs.iloc[j].el_idx
-                dielectron_mass = mass
+                dilepton_mass = mass
                 if is_mc:
                     gpx1_ = objs.iloc[i].pt_gen * np.cos(objs.iloc[i].phi_gen)
                     gpy1_ = objs.iloc[i].pt_gen * np.sin(objs.iloc[i].phi_gen)
@@ -49,7 +49,7 @@ def find_dielectron(objs, is_mc=True):
                         - (gpy1_ + gpy2_) ** 2
                         - (gpz1_ + gpz2_) ** 2
                     )
-                    dielectron_mass_gen = math.sqrt(max(0, gm2))
+                    dilepton_mass_gen = math.sqrt(max(0, gm2))
 
     if dmass == 20:
         objs = objs.sort_values(by="pt")
@@ -76,7 +76,7 @@ def find_dielectron(objs, is_mc=True):
             - (pz1_ + pz2_) ** 2
         )
         mass = math.sqrt(max(0, m2))
-        dielectron_mass = mass
+        dilep_ton_mass = mass
         idx1 = obj1.el_idx
         idx2 = obj2.el_idx
         if is_mc:
@@ -94,15 +94,15 @@ def find_dielectron(objs, is_mc=True):
                 - (gpy1_ + gpy2_) ** 2
                 - (gpz1_ + gpz2_) ** 2
             )
-            dielectron_mass_gen = math.sqrt(max(0, gm2))
+            dilepton_mass_gen = math.sqrt(max(0, gm2))
     if is_mc:
         log1 = objs.loc[objs.el_idx == idx1, "idx"].to_numpy()
         log2 = objs.loc[objs.el_idx == idx2, "idx"].to_numpy()
         if log1[0] == -1 or log2[0] == -1:
-            dielectron_mass_gen = -999.0
-        return [idx1, idx2, dielectron_mass, dielectron_mass_gen]
+            dilepton_mass_gen = -999.0
+        return [idx1, idx2, dilepton_mass,dilepton_mass_gen]
     else:
-        return [idx1, idx2, dielectron_mass]
+        return [idx1, idx2, dilepton_mass]
 
 
 def fill_electrons(output, e1, e2, is_mc=True):
@@ -139,36 +139,35 @@ def fill_electrons(output, e1, e2, is_mc=True):
         "e2_sip3d",
     ]
 
-    dielectron_variable_names = [
-        "dielectron_mass",
-        "dielectron_mass_gen",
-        "dielectron_mass_res",
-        "dielectron_mass_res_rel",
-        "dielectron_ebe_mass_res",
-        "dielectron_ebe_mass_res_rel",
-        "dielectron_pt",
-        "dielectron_pt_log",
-        "dielectron_eta",
-        "dielectron_phi",
-        "dielectron_pt_gen",
-        "dielectron_eta_gen",
-        "dielectron_phi_gen",
-        "dielectron_dEta",
-        "dielectron_dPhi",
-        "dielectron_dR",
-        "dielectron_rap",
-        "dielectron_cos_theta_cs",
-        "dielectron_phi_cs",
+    dilepton_variable_names = [
+        "dilepton_mass",
+#        "dilepton_mass_gen",
+        "dilepton_mass_res",
+        "dilepton_mass_res_rel",
+        "dilepton_ebe_mass_res",
+        "dilepton_ebe_mass_res_rel",
+        "dilepton_pt",
+        "dilepton_pt_log",
+        "dilepton_eta",
+        "dilepton_phi",
+        "dilepton_dEta",
+        "dilepton_dPhi",
+        "dilepton_dR",
+        "dilepton_rap",
+        "bbangle", 
+        "dilepton_cos_theta_cs",
+        "dilepton_phi_cs",
         "wgt_nominal",
         "pu_wgt",
     ]
-    v_names = e1_variable_names + e2_variable_names + dielectron_variable_names
+    v_names = e1_variable_names + e2_variable_names + dilepton_variable_names
 
     # Initialize columns for electron variables
     for n in v_names:
         output[n] = 0.0
 
     # Fill single electron variables
+    ee = p4_sum(e1, e2, is_mc)
     for v in [
         "pt",
         "eta",
@@ -187,9 +186,7 @@ def fill_electrons(output, e1, e2, is_mc=True):
             output[f"e1_{v}"] = -999.0
             output[f"e2_{v}"] = -999.0
 
-    # Fill dielectron variables
-
-    ee = p4_sum(e1, e2, is_mc)
+    # Fill dilepton variables
     for v in [
         "pt",
         "eta",
@@ -201,24 +198,24 @@ def fill_electrons(output, e1, e2, is_mc=True):
         "mass_gen",
         "rap",
     ]:
-        name = f"dielectron_{v}"
+        name = f"dilepton_{v}"
         try:
             output[name] = ee[v]
             output[name] = output[name].fillna(-999.0)
         except Exception:
             output[name] = -999.0
 
-    output["dielectron_pt_log"] = np.log(output.dielectron_pt[output.dielectron_pt > 0])
-    output.loc[output.dielectron_pt < 0, "dielectron_pt_log"] = -999.0
+    output["dilepton_pt_log"] = np.log(output.dilepton_pt[output.dilepton_pt > 0])
+    output.loc[output.dilepton_pt < 0, "dilepton_pt_log"] = -999.0
 
     ee_deta, ee_dphi, ee_dr = delta_r(e1.eta, e2.eta, e1.phi, e2.phi)
-    output["dielectron_pt"] = ee.pt
-    output["dielectron_eta"] = ee.eta
-    output["dielectron_phi"] = ee.phi
-    output["dielectron_dEta"] = ee_deta
-    output["dielectron_dPhi"] = ee_dphi
-    output["dielectron_dR"] = ee_dr
-    output["dielectron_cos_theta_cs"], output["dielectron_phi_cs"] = cs_variables(
+    output["dilepton_pt"] = ee.pt
+    output["dilepton_eta"] = ee.eta
+    output["dilepton_phi"] = ee.phi
+    output["dilepton_dEta"] = ee_deta
+    output["dilepton_dPhi"] = ee_dphi
+    output["dilepton_dR"] = ee_dr
+    output["dilepton_cos_theta_cs"], output["dilepton_phi_cs"] = cs_variables(
         e1, e2
     )
 
@@ -227,7 +224,7 @@ def fill_electrons(output, e1, e2, is_mc=True):
     for v in [
         "mass_scaleUncUp",
     ]:
-        name = f"dielectron_{v}"
+        name = f"dilepton_{v}"
         try:
             output[name] = ee[v]
             output[name] = output[name].fillna(-999.0)
@@ -238,7 +235,7 @@ def fill_electrons(output, e1, e2, is_mc=True):
     for v in [
         "mass_scaleUncDown",
     ]:
-        name = f"dielectron_{v}"
+        name = f"dilepton_{v}"
         try:
             output[name] = ee[v]
             output[name] = output[name].fillna(-999.0)

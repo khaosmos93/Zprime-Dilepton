@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 from hist.intervals import poisson_interval
-from copperhead.python.workflow import parallelize
-from copperhead.python.io import load_stage2_output_hists, mkdir
+from python.workflow import parallelize
+from python.io import load_stage2_output_hists, mkdir
 from config.variables import Variable
 
 from produceResults.io import load_stage2_output_hists_2D

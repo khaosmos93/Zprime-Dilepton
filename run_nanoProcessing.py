@@ -11,7 +11,7 @@ from coffea.nanoevents import NanoAODSchema
 
 # from copperhead.stage1.preprocessor import load_samples
 from processNano.preprocessor import load_samples
-from copperhead.python.io import mkdir, save_stage1_output_to_parquet
+from python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
 import os
@@ -73,7 +73,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.148.61"  # hammer-c000
+node_ip = "128.211.148.60"  # hammer-c000
 # node_ip = "128.211.149.135"
 # node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
@@ -158,13 +158,14 @@ def submit_job(parameters):
     mkdir(out_dir)
     out_dir += "/" + parameters["label"]
     mkdir(out_dir)
-    out_dir += "/" + "stage1_output"
+    out_dir += "/" + "stage1_output" + "_" + parameters["channel"]
     mkdir(out_dir)
     out_dir += "/" + parameters["year"]
     mkdir(out_dir)
     executor_args = {"client": parameters["client"], "retries": 0}
     processor_args = {
         "samp_info": parameters["samp_infos"],
+        "channel": parameters["channel"],
         "do_timer": parameters["do_timer"],
         "do_btag_syst": parameters["do_btag_syst"],
         # "regions": parameters["regions"],
@@ -172,12 +173,8 @@ def submit_job(parameters):
         "apply_to_output": partial(save_stage1_output_to_parquet, out_dir=out_dir),
     }
 
-    if parameters["channel"] == "mu":
-        from processNano.dimuon_processor import DimuonProcessor as event_processor
-    elif parameters["channel"] == "el":
-        from processNano.dielectron_processor import (
-            DielectronProcessor as event_processor,
-        )
+    if parameters["channel"] == "mu" or parameters["channel"] == "el":
+        from processNano.dilepton_processor import DileptonProcessor as event_processor
     elif parameters["channel"] == "eff_mu":
         from processNano.dimuon_eff_processor import (
             DimuonEffProcessor as event_processor,
@@ -196,7 +193,6 @@ def submit_job(parameters):
         chunksize=parameters["chunksize"],
         maxchunks=parameters["maxchunks"],
     )
-
     try:
         run(
             parameters["samp_infos"].fileset,
@@ -343,7 +339,7 @@ if __name__ == "__main__":
         # create local cluster
         parameters["client"] = Client(
             processes=True,
-            n_workers=24,
+            n_workers=1,
             # dashboard_address=dash_local,
             threads_per_worker=1,
             memory_limit="6GB",
@@ -364,7 +360,7 @@ if __name__ == "__main__":
             # if "dy200to400" not in sample:
             # if sample != "ttbar_lep_inclusive":
             #    continue
-            #if "dy0J_M6000toInf" not in sample:
+            #if "dy1J_M6000toInf" not in sample:
             #if "data_A" not in sample:
             # if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
             #    continue
@@ -373,8 +369,8 @@ if __name__ == "__main__":
             #    continue
             #if sample not in ["data_A"]:
             #    continue
-            if group != "data":
-                continue
+            #if group != "data":
+            #    continue
             if group == "data":
                 datasets_data.append(sample)
             else:
@@ -393,7 +389,6 @@ if __name__ == "__main__":
         tick1 = time.time()
         parameters["samp_infos"] = load_samples(datasets, parameters)
         timings[f"load {lbl}"] = time.time() - tick1
-
         tick2 = time.time()
         out = submit_job(parameters)
         timings[f"process {lbl}"] = time.time() - tick2

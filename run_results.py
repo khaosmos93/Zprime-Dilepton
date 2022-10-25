@@ -48,7 +48,8 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
     "global_path": "/depot/cms/users/schul105/dilepton/Zprime-Dilepton/output/",
-    "label": "weightTest",
+    "label": "combinedTest",
+    "flavor": args.flavor,
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["inclusive", "bb", "be"],
     "syst_variations": ["nominal"],
@@ -58,13 +59,13 @@ parameters = {
         "min_bl_mass",
         "min_b1l_mass",
         "min_b2l_mass",
-        "dimuon_mass",
-        "dimuon_mass_gen",
+        "dilepton_mass",
+        "dilepton_mass_gen",
         "njets",
         "nbjets",
-        "dimuon_cos_theta_cs",
-    ],  # "dimuon_mass"],
-    "plot_vars_2d": [["dimuon_mass", "met"]],  # "dimuon_mass"],
+        "dilepton_cos_theta_cs",
+    ],  # "dilepton_mass"],
+    "plot_vars_2d": [["dilepton_mass", "met"]],  # "dilepton_mass"],
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
@@ -78,23 +79,12 @@ parameters = {
         "min_bl_mass",
         "min_b1l_mass",
         "min_b2l_mass",
-        "dimuon_mass",
-        "dimuon_mass_gen",
-    ],  # "dimuon_mass"],
+        "dilepton_mass",
+        "dilepton_mass_gen",
+    ],  # "dilepton_mass"],
 }
 
-if args.flavor == "ele":
-    parameters["plot_vars"] = [
-        "min_bl_mass",
-        "min_b1l_mass",
-        "min_b2l_mass",
-        "dielectron_mass",
-        "dielectron_mass_gen",
-        "njets",
-        "nbjets",
-        "dielectron_cos_theta_cs",
 
-]
 
 parameters["grouping"] = {
     "data_A": "Data",

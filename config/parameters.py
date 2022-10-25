@@ -177,7 +177,7 @@ parameters.update(
                 "BadChargedCandidateFilter",
             ]
         ),
-        "do_l1prefiring_wgts": {"2016": True, "2017": True, "2018": False},
+        "do_l1prefiring_wgts": {"2016": True, "2017": True, "2018": True},
         "3dangle": for_all_years(-0.9998),
     }
 )
