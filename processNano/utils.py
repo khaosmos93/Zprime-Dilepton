@@ -56,17 +56,20 @@ def p4(obj, is_mc=True):
     result.eta = np.arcsinh(result.pz / result.pt)
     result.phi = np.arctan2(result.py, result.px)
     result.mass = np.sqrt(
-        result.e ** 2 - result.px ** 2 - result.py ** 2 - result.pz ** 2
+        np.maximum(0., result.e ** 2 - result.px ** 2 - result.py ** 2 - result.pz ** 2)
     )
     if is_mc:
         result.pt_gen = np.sqrt(result.px_gen ** 2 + result.py_gen ** 2)
         result.eta_gen = np.arcsinh(result.pz_gen / result.pt_gen)
         result.phi_gen = np.arctan2(result.py_gen, result.px_gen)
         result.mass_gen = np.sqrt(
-            result.e_gen ** 2
-            - result.px_gen ** 2
-            - result.py_gen ** 2
-            - result.pz_gen ** 2
+            np.maximum(
+                0.,
+                result.e_gen ** 2
+                - result.px_gen ** 2
+                - result.py_gen ** 2
+                - result.pz_gen ** 2
+            )
         )
     result.rap = 0.5 * np.log((result.e + result.pz) / (result.e - result.pz))
     return result
@@ -95,7 +98,17 @@ def p4_sum(obj1, obj2, is_mc=True):
             "mass_gen",
             "rap",
         ],
-    ).fillna(0.0)
+    ) # .fillna(0.0)
+
+    if obj1.empty or obj2.empty:
+        return result
+    if obj1.pt.isnull().all():
+        return result
+    if obj2.pt.isnull().all():
+        return result
+    
+    result = result.fillna(0.0)
+
     for obj in [obj1, obj2]:
         px_ = obj.pt * np.cos(obj.phi)
         py_ = obj.pt * np.sin(obj.phi)
@@ -117,21 +130,24 @@ def p4_sum(obj1, obj2, is_mc=True):
             result.pz_gen += pz_gen_
             result.e_gen += e_gen_
 
-    result.pt = np.sqrt(result.py ** 2 + result.py ** 2)
+    result.pt = np.sqrt(result.px ** 2 + result.py ** 2)
     result.eta = np.arcsinh(result.pz / result.pt)
     result.phi = np.arctan2(result.py, result.px)
     result.mass = np.sqrt(
-        result.e ** 2 - result.px ** 2 - result.py ** 2 - result.pz ** 2
+        np.maximum(0., result.e ** 2 - result.px ** 2 - result.py ** 2 - result.pz ** 2)
     )
     if is_mc:
         result.pt_gen = np.sqrt(result.px_gen ** 2 + result.py_gen ** 2)
         result.eta_gen = np.arcsinh(result.pz_gen / result.pt_gen)
         result.phi_gen = np.arctan2(result.py_gen, result.px_gen)
         result.mass_gen = np.sqrt(
-            result.e_gen ** 2
-            - result.px_gen ** 2
-            - result.py_gen ** 2
-            - result.pz_gen ** 2
+            np.maximum(
+                0.,
+                result.e_gen ** 2
+                - result.px_gen ** 2
+                - result.py_gen ** 2
+                - result.pz_gen ** 2
+            )
         )
     result.rap = 0.5 * np.log((result.e + result.pz) / (result.e - result.pz))
     return result

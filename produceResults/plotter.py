@@ -2,14 +2,15 @@ import pandas as pd
 import numpy as np
 from hist.intervals import poisson_interval
 from copperhead.python.workflow import parallelize
-from copperhead.python.io import load_stage2_output_hists, mkdir
+from copperhead.python.io import mkdir
 from config.variables import Variable
 
-from produceResults.io import load_stage2_output_hists_2D
+from produceResults.io import load_stage2_output_hists, load_stage2_output_hists_2D
 
 import matplotlib.pyplot as plt
 import mplhep as hep
 from matplotlib.colors import LogNorm
+from matplotlib.ticker import FormatStrFormatter
 
 style = hep.style.CMS
 style["mathtext.fontset"] = "cm"
@@ -89,7 +90,7 @@ def plotter(client, parameters, hist_df=None, timer=None):
             "var_name": parameters["plot_vars"],
             "dataset": parameters["datasets"],
         }
-        print(arg_load)
+        # print(arg_load)
         hist_dfs = parallelize(load_stage2_output_hists, arg_load, client, parameters)
         hist_df = pd.concat(hist_dfs).reset_index(drop=True)
         if hist_df.shape[0] == 0:
@@ -192,7 +193,7 @@ def plot(args, parameters={}):
     for wgt in variation:
         slicer = {"region": region, "channel": channel, "variation": wgt}
         for entry in entries.values():
-            print(entry)
+            # print(entry)
             if len(entry.entry_list) == 0:
                 continue
             plottables_df = get_plottables(hist, entry, year, var_name, slicer)
@@ -215,10 +216,10 @@ def plot(args, parameters={}):
 
             # print(labels_new)
             total_yield += sum([p.sum() for p in plottables])
-            print(total_yield)
+            # print(total_yield)
             if len(plottables) == 0:
                 continue
-            yerr = np.sqrt(sum(plottables).values()) if entry.yerr else None
+            yerr = np.sqrt(abs(sum(plottables).values())) if entry.yerr else None
             hep.histplot(
                 plottables,
                 label=labels,
@@ -243,7 +244,7 @@ def plot(args, parameters={}):
                         y2=np.r_[err[1, :], err[1, -1]],
                         **stat_err_opts,
                     )
-    print(parameters["plot_vars"])
+    # print(parameters["plot_vars"])
     if parameters["plot_vars"]:
         ax2 = fig.add_subplot(gs[1], sharex=ax1)
         num = den = []
@@ -305,6 +306,11 @@ def plot(args, parameters={}):
     # else:
     #    ax1.set_xlabel(var.caption, loc="right")
 
+    if var.logx:
+        ax1.set_xscale("log")
+        ax1.tick_params(axis='x', which='minor', labelsize=5, labelbottom=False)
+        ax1.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
+
     if parameters["plot_ratio"]:
         # Bottom panel: Data/MC ratio plot
         ax2 = fig.add_subplot(gs[1], sharex=ax1)
@@ -362,6 +368,11 @@ def plot(args, parameters={}):
         ax2.set_ylabel("Data/MC", loc="center")
         ax2.set_xlabel(var.caption, loc="right")
         ax2.legend(prop={"size": "x-small"})
+
+        if var.logx:
+            ax2.set_xscale("log")
+            ax2.tick_params(axis='x', which='minor', labelsize=5, labelbottom=False)
+            ax2.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
 
     hep.cms.label(ax=ax1, data=True, label="Preliminary", year=year)
 

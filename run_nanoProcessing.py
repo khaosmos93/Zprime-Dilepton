@@ -9,31 +9,30 @@ from functools import partial
 from coffea.processor import DaskExecutor, Runner
 from coffea.nanoevents import NanoAODSchema
 
-# from copperhead.stage1.preprocessor import load_samples
 from processNano.preprocessor import load_samples
 from copperhead.python.io import mkdir, save_stage1_output_to_parquet
 import dask
 from dask.distributed import Client
 import os
 
-user_name = os.getcwd().split("/")[5]
-dask.config.set({"temporary-directory": f"/depot/cms/users/{user_name}/dask-temp/"})
+user_name = os.getcwd().split("/")[2]
+dask.config.set({"temporary-directory": f"/ceph/{user_name}/Dilepton/dask-temp/"})
 global_path = os.getcwd() + "/output/"
 parser = argparse.ArgumentParser()
 # Slurm cluster IP to use. If not specified, will create a local cluster
 parser.add_argument(
-    "-sl",
-    "--slurm",
-    dest="slurm_port",
+    "-i",
+    "--ip",
+    dest="ip",
     default=None,
     action="store",
-    help="Slurm cluster port (if not specified, " "will create a local cluster)",
+    help="Cluster ip:port (if not specified, " "will create a local cluster)",
 )
 parser.add_argument(
     "-y",
     "--year",
     dest="year",
-    default="2016",
+    default="2018",
     action="store",
     help="Year to process (2016, 2017 or 2018)",
 )
@@ -41,7 +40,7 @@ parser.add_argument(
     "-l",
     "--label",
     dest="label",
-    default="test_march",
+    default="v03",
     action="store",
     help="Unique run label (to create output path)",
 )
@@ -49,7 +48,7 @@ parser.add_argument(
     "-ch",
     "--chunksize",
     dest="chunksize",
-    default=100000,
+    default=200000,
     action="store",
     help="Approximate chunk size",
 )
@@ -73,18 +72,15 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.148.60"  # hammer-c000
-# node_ip = "128.211.149.135"
-# node_ip = "128.211.149.140"
-dash_local = f"{node_ip}:34875"
+dash_local = None  # f"{node_ip}:34875"
 
 
-if args.slurm_port is None:
+if args.ip is None:
     local_cluster = True
-    slurm_cluster_ip = ""
+    cluster_ip = ""
 else:
     local_cluster = False
-    slurm_cluster_ip = f"{node_ip}:{args.slurm_port}"
+    cluster_ip = f"{args.ip}"
 
 mch = None if int(args.maxchunks) < 0 else int(args.maxchunks)
 dt = datetime.datetime.now()
@@ -106,21 +102,18 @@ parameters = {
     "label": args.label,
     "global_path": global_path,
     "out_path": f"{args.year}_{args.label}_{local_time}",
-    # "server": "root://xrootd.rcac.purdue.edu/",
-    #"server": "root://cmsxrootd.fnal.gov//",
     "xrootd": False,
-    "server": "/mnt/hadoop/",
-    "datasets_from": "Zprime",
-    "from_das": True,
+    "server": "root://cmsxrootd-redirectors.gridka.de/",
+    "datasets_from": "muon",
+    "from_das": False,
     "chunksize": int(args.chunksize),
     "maxchunks": mch,
-    "save_output": True,
     "local_cluster": local_cluster,
-    "slurm_cluster_ip": slurm_cluster_ip,
+    "cluster_ip": cluster_ip,
     "client": None,
     "channel": args.channel,
-    "n_workers": 32,
-    "do_timer": True,
+    "n_workers": 24,
+    "do_timer": False,
     "do_btag_syst": False,
     "save_output": True,
 }
@@ -155,7 +148,7 @@ def submit_job(parameters):
         out_dir = parameters["global_path"] + parameters["out_path"]
     else:
         out_dir = parameters["global_path"]
-    print(out_dir)
+    # print(out_dir)
     mkdir(out_dir)
     out_dir += "/" + parameters["label"]
     mkdir(out_dir)
@@ -215,70 +208,125 @@ def submit_job(parameters):
 if __name__ == "__main__":
     tick = time.time()
     smp = {
-        # 'single_file': [
-        #     'test_file',
-        # ],
         "data": [
-            "data_A",
-            "data_B",
-            "data_C",
-            "data_D",
+            # "data_A",
+            # "data_B",
+            # "data_C",
+            # "data_D",
         ],
         "other_mc": [
-            "WZ",
-            "WZ3LNu",
-            "WZ2L2Q",
-            "ZZ",
-            #"ZZ2L2Nu",
-            "ZZ2L2Nu_ext",
-            "ZZ2L2Q",
-            "ZZ4L",
-            "ZZ4L_ext",
-            "WWinclusive",
-            "WW200to600",
-            "WW600to1200",
-            "WW1200to2500",
-            "WW2500",
-            "dyInclusive50",
-            "Wjets",
-            "ttbar_lep_inclusive",
-            "ttbar_lep_M500to800_ext",
-            "WW600to1200",
-            "WW1200to2500",
-            "ttbar_lep_M1200to1800",
-            "ttbar_lep_M1800toInf",
-            "Wantitop",
-            "Wantitop1",
-            "Wantitop2",
-            "tW",
-            "tW1",
-            "tW2",
+            "ttbar_lep_inclusive_nocut",
+            "WWinclusive_nocut",
+
+            # "dyInclusive50",
+            # "Wantitop",
+            # "tW",
+            # "ttbar_lep_inclusive",
+            # "ttbar_lep_M500to800",
+            # "ttbar_lep_M800to1200",
+            # "ttbar_lep_M1200to1800",
+            # "ttbar_lep_M1800toInf",
+            # "WWinclusive",
+            # "WW200to600",
+            # "WW600to1200",
+            # "WW1200to2500",
+            # "WW2500toInf",
+            # "WZ1L1Nu2Q",
+            # "WZ2L2Q",
+            # "WZ3LNu",
+            # "ZZ2L2Nu",
+            # "ZZ2L2Q",
+            # "ZZ4L",
         ],
         "dy": [
-            # "dy50to120",
-            "dy120to200",
-            "dy200to400",
-            "dy400to800",
-            "dy800to1400",
-            "dy1400to2300",
-            "dy2300to3500",
-            "dy3500to4500",
-            "dy4500to6000",
-            "dy6000toInf",
+            # "dy_M50_incl",
+            # "dy_M50",
+            "dy0J_M50",
+            "dy1J_M50",
+            "dy2J_M50",
+            "dy0J_M50_incl",
+            "dy1J_M50_incl",
+            "dy2J_M50_incl",
+            "dy0J_M200to400",
+            "dy0J_M400to800",
+            "dy0J_M800to1400",
+            "dy0J_M1400to2300",
+            "dy0J_M2300to3500",
+            "dy0J_M3500to4500",
+            "dy0J_M4500to6000",
+            "dy0J_M6000toInf",
+            "dy1J_M200to400",
+            "dy1J_M400to800",
+            "dy1J_M800to1400",
+            "dy1J_M1400to2300",
+            "dy1J_M2300to3500",
+            "dy1J_M3500to4500",
+            "dy1J_M4500to6000",
+            "dy1J_M6000toInf",
+            "dy2J_M200to400",
+            "dy2J_M400to800",
+            "dy2J_M800to1400",
+            "dy2J_M1400to2300",
+            "dy2J_M2300to3500",
+            "dy2J_M3500to4500",
+            "dy2J_M4500to6000",
+            "dy2J_M6000toInf",
         ],
         "CI": [
+            # "bsll_lambda1TeV_M200to500",
+            # "bsll_lambda1TeV_M500to1000",
+            # "bsll_lambda1TeV_M1000to2000",
+            # "bsll_lambda1TeV_M2000toInf",
+            # "bsll_lambda2TeV_M200to500",
+            # "bsll_lambda2TeV_M500to1000",
+            # "bsll_lambda2TeV_M1000to2000",
+            # "bsll_lambda2TeV_M2000toInf",
+            # "bsll_lambda4TeV_M200to500",
+            # "bsll_lambda4TeV_M500to1000",
+            # "bsll_lambda4TeV_M1000to2000",
+            # "bsll_lambda4TeV_M2000toInf",
+            # "bsll_lambda8TeV_M200to500",
+            # "bsll_lambda8TeV_M500to1000",
+            # "bsll_lambda8TeV_M1000to2000",
+            # "bsll_lambda8TeV_M2000toInf",
+
+            "bbll_6TeV_M1300To2000_negLL",
+            "bbll_6TeV_M2000ToInf_negLL",
+            "bbll_6TeV_M300To800_negLL",
+            "bbll_6TeV_M800To1300_negLL",
+            "bbll_10TeV_M1300To2000_negLL",
+            "bbll_10TeV_M2000ToInf_negLL",
+            "bbll_10TeV_M300To800_negLL",
+            "bbll_10TeV_M800To1300_negLL",
+            "bbll_14TeV_M1300To2000_negLL",
+            "bbll_14TeV_M2000ToInf_negLL",
+            "bbll_14TeV_M300To800_negLL",
+            "bbll_14TeV_M800To1300_negLL",
+            "bbll_18TeV_M1300To2000_negLL",
+            "bbll_18TeV_M2000ToInf_negLL",
+            "bbll_18TeV_M300To800_negLL",
+            "bbll_18TeV_M800To1300_negLL",
+            "bbll_22TeV_M1300To2000_negLL",
+            "bbll_22TeV_M2000ToInf_negLL",
+            "bbll_22TeV_M300To800_negLL",
+            "bbll_22TeV_M800To1300_negLL",
+            "bbll_26TeV_M1300To2000_negLL",
+            "bbll_26TeV_M2000ToInf_negLL",
+            "bbll_26TeV_M300To800_negLL",
+            "bbll_26TeV_M800To1300_negLL",
+
             "bbll_4TeV_M1000_negLL",
             "bbll_4TeV_M1000_negLR",
             "bbll_4TeV_M1000_posLL",
             "bbll_4TeV_M1000_posLR",
-            "bbll_4TeV_M400_negLL",
-            "bbll_4TeV_M400_negLR",
-            "bbll_4TeV_M400_posLL",
-            "bbll_4TeV_M400_posLR",
             "bbll_8TeV_M1000_negLL",
             "bbll_8TeV_M1000_negLR",
             "bbll_8TeV_M1000_posLL",
             "bbll_8TeV_M1000_posLR",
+            "bbll_4TeV_M400_negLL",
+            "bbll_4TeV_M400_negLR",
+            "bbll_4TeV_M400_posLL",
+            "bbll_4TeV_M400_posLR",
             "bbll_8TeV_M400_negLL",
             "bbll_8TeV_M400_negLR",
             "bbll_8TeV_M400_posLL",
@@ -290,14 +338,16 @@ if __name__ == "__main__":
         # create local cluster
         parameters["client"] = Client(
             processes=True,
-            n_workers=24,
+            n_workers=parameters["n_workers"],
             # dashboard_address=dash_local,
             threads_per_worker=1,
-            memory_limit="6GB",
+            memory_limit="10GB",
         )
+        print("Client:", parameters["client"])
+        print("dashboard_link:", parameters["client"].dashboard_link)
     else:
         # connect to existing Slurm cluster
-        parameters["client"] = Client(parameters["slurm_cluster_ip"])
+        parameters["client"] = Client(parameters["cluster_ip"])
     print("Client created")
 
     datasets_mc = []
@@ -305,22 +355,6 @@ if __name__ == "__main__":
 
     for group, samples in smp.items():
         for sample in samples:
-            # if sample not in blackList:
-            #    continue
-            # if "WWinclusive" not in sample:
-            # if "dy200to400" not in sample:
-            # if sample != "ttbar_lep_inclusive":
-            #    continue
-            if "dy200to400" not in sample:
-            # if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
-                continue
-
-            #if group != "other_mc":
-            #    continue
-            #if sample not in ["data_A"]:
-            #    continue
-            # if group != "data":
-            #    continue
             if group == "data":
                 datasets_data.append(sample)
             else:
@@ -329,6 +363,8 @@ if __name__ == "__main__":
     timings = {}
 
     to_process = {"MC": datasets_mc, "DATA": datasets_data}
+    # to_process = {"DATA": datasets_data}
+    # to_process = {"MC": datasets_mc}
     for lbl, datasets in to_process.items():
         if len(datasets) == 0:
             continue

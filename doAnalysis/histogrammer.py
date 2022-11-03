@@ -29,7 +29,8 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
         var = Variable(var_name, var_name, 50, 0, 5, 1e-2, 1e8)
 
     # prepare list of systematic variations
-    wgt_variations = [w for w in df.columns if ("wgt_" in w)]
+    # wgt_variations = [w for w in df.columns if ("wgt_" in w)]
+    wgt_variations = ["wgt_nominal"]
     syst_variations = parameters.get("syst_variations", ["nominal"])
     variations = []
     for w in wgt_variations:
@@ -98,9 +99,15 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
             & ((df.r == region) | (region == "inclusive"))
             & (df.year == year)
             & (df.dimuon_mass > 120)
+            & ((df.nbjets < 1) | (df.min_bl_mass > 175))
+            & ((df.mu1_tkRelIso < 0.1) & (df.mu2_tkRelIso < 0.1))
             & ((df["channel"] == channel) | (channel == "inclusive"))
             & (~((df.dataset == "ttbar_lep_inclusive") & (df.dimuon_mass_gen > 500)))
             & (~((df.dataset == "WWinclusive") & (df.dimuon_mass_gen > 200)))
+            & (~((df.dataset == "dy_M50") & (df.dimuon_mass_gen > 200)))
+            & (~((df.dataset == "dy0J_M50") & (df.dimuon_mass_gen > 200)))
+            & (~((df.dataset == "dy1J_M50") & (df.dimuon_mass_gen > 200)))
+            & (~((df.dataset == "dy2J_M50") & (df.dimuon_mass_gen > 200)))
         )
 
         data = df.loc[slicer, var_name]
@@ -129,16 +136,16 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
             "channel": channel,
             "yield": weight.sum(),
         }
-        if weight.sum() == 0:
-            continue
+        # if weight.sum() == 0:
+        #     continue
         total_yield += weight.sum()
         if "return_hist" in parameters:
             if parameters["return_hist"]:
                 hist_info_row["hist"] = hist
         hist_info_rows.append(hist_info_row)
 
-    if total_yield == 0:
-        return None
+    # if total_yield == 0:
+    #     return None
 
     # save histogram for this partition to disk
     # (partitions will be joined in stage3)
@@ -235,11 +242,17 @@ def make_histograms2D(
 
         slicer = (
             (df.dataset == dataset)
-            & (df.r == region)
+            & ((df.r == region) | (region == "inclusive"))
             & (df.year == year)
+            & (df.dimuon_mass > 120)
+            & ((df.mu1_tkRelIso < 0.1) & (df.mu2_tkRelIso < 0.1))
             & ((df["channel"] == channel) | (channel == "inclusive"))
             & (~((df.dataset == "ttbar_lep_inclusive") & (df.dimuon_mass_gen > 500)))
             & (~((df.dataset == "WWinclusive") & (df.dimuon_mass_gen > 200)))
+            & (~((df.dataset == "dy_M50") & (df.dimuon_mass_gen > 200)))
+            & (~((df.dataset == "dy0J_M50") & (df.dimuon_mass_gen > 200)))
+            & (~((df.dataset == "dy1J_M50") & (df.dimuon_mass_gen > 200)))
+            & (~((df.dataset == "dy2J_M50") & (df.dimuon_mass_gen > 200)))
         )
 
         data1 = df.loc[slicer, var_name1]

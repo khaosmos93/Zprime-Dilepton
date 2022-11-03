@@ -59,11 +59,11 @@ def btagSF(df, year, correction="shape", is_UL=True):
         else:
             systs = ["central"]
 
-        cset = BTagScaleFactor(parameters["btag_sf_pre_UL"][year], "medium")
+        cset = BTagScaleFactor(parameters["btag_sf_pre_UL"][year], "tight")
 
     df["pre_selection"] = False
     df.loc[
-        (df.pt > 20.0) & (abs(df.eta) < 2.4) & (df.jetId >= 2), "pre_selection"
+        (df.pt > 30.0) & (abs(df.eta) < 2.4) & (df.jetId >= 2), "pre_selection"
     ] = True
     mask = df["pre_selection"]
     for syst in systs:
@@ -87,7 +87,7 @@ def btagSF(df, year, correction="shape", is_UL=True):
             is_bc = df["hadronFlavour"] >= 4
             is_light = df["hadronFlavour"] < 4
             path_eff = parameters["btag_sf_eff"][year]
-            wp = parameters["UL_btag_medium"][year]
+            wp = parameters["UL_btag_tight"][year]
             with open(path_eff, "rb") as handle:
                 eff = pickle.load(handle)
 
@@ -107,9 +107,9 @@ def btagSF(df, year, correction="shape", is_UL=True):
                     else:
                         corr = "deepJet_comb"
                     try:
-                        fac = cset[corr].evaluate(syst, "M", flavor, eta, pt)
+                        fac = cset[corr].evaluate(syst, "T", flavor, eta, pt)
                     except Exception:
-                        fac = cset[corr].evaluate("central", "M", flavor, eta, pt)
+                        fac = cset[corr].evaluate("central", "T", flavor, eta, pt)
                 else:
                     try:
 
@@ -494,6 +494,7 @@ def fill_bjets(output, variables, jets, leptons, flavor="mu", is_mc=True):
 
     if njet > 0:
         bjet = p4(jet1, is_mc=is_mc)
+
         mmj = p4_sum(dileptons, bjet, is_mc=is_mc)
         for v in [
             "pt",
@@ -528,7 +529,7 @@ def fill_bjets(output, variables, jets, leptons, flavor="mu", is_mc=True):
         variables["min_bl_mass"] = variables[["b1l1_mass", "b1l2_mass"]].min(axis=1)
 
     if njet > 1:
-        bjet2 = p4(jet1, is_mc=is_mc)
+        bjet2 = p4(jet2, is_mc=is_mc)
         mmj2 = p4_sum(dileptons, bjet2, is_mc=is_mc)
         for v in [
             "pt",
@@ -582,7 +583,7 @@ def fill_bjets(output, variables, jets, leptons, flavor="mu", is_mc=True):
             except Exception:
                 variables[f"bjj_{v}"] = -999.0
 
-        variables.bjj_mass_log = np.log(variables.bjj_mass)
+        variables.bjj_mass_log = np.log(variables.bjj_mass.astype(float))
 
         variables.bjj_dEta, variables.bjj_dPhi, _ = delta_r(
             variables.bjet1_eta,

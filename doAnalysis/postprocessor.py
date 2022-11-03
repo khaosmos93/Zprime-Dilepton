@@ -68,10 +68,12 @@ def on_partition(args, parameters):
     # preprocess
     df.fillna(-999.0, inplace=True)
     df = df[(df.dataset == dataset) & (df.year == year)]
-    if "dy_m105_160_amc" in dataset:
-        df = df[df.gjj_mass <= 350]
-    if "dy_m105_160_vbf_amc" in dataset:
-        df = df[df.gjj_mass > 350]
+    # if "dy_m105_160_amc" in dataset:
+    #     df = df[df.gjj_mass <= 350]
+    # if "dy_m105_160_vbf_amc" in dataset:
+    #     df = df[df.gjj_mass > 350]
+    # if "dy_M50" in dataset:
+    #     df = df[df.dimuon_mass_gen <= 200]
 
     # < evaluate here MVA scores before categorization, if needed >
     # ...
@@ -81,9 +83,11 @@ def on_partition(args, parameters):
     regions = [r for r in parameters["regions"] if r in df.r.unique()]
     if "inclusive" in parameters["regions"]:
         regions.append("inclusive")
-    channels = [c for c in parameters["channels"] if c in df["channel"].unique()]
-    if "inclusive" in parameters["channels"]:
-        channels.append("inclusive")
+    # channels = [c for c in parameters["channels"] if c in df["channel"].unique()]
+    # if "inclusive" in parameters["channels"]:
+    #     channels.append("inclusive")
+    channels = [c for c in parameters["channels"]]
+
     # < convert desired columns to histograms >
     # not parallelizing for now - nested parallelism leads to a lock
     hist_info_rows = []

@@ -34,7 +34,7 @@ def load_sample(dataset, parameters):
 
 
 def load_samples(datasets, parameters):
-    print(parameters["year"])
+    # print(parameters["year"])
     args = {
         "year": parameters["year"],
         "out_path": parameters["out_path"],
@@ -62,14 +62,14 @@ def load_samples(datasets, parameters):
 
 def read_via_xrootd(server, path, from_das=False):
     if from_das:
-        print(path)
+        # print(path)
         if "USER" in path:
             command = f'dasgoclient --query=="file dataset={path} instance=prod/phys03"'
         else:
             command = f'dasgoclient --query=="file dataset={path}"'
     else:
         command = f"xrdfs {server} ls -R {path} | grep '.root'"
-    print(command)
+    # print(command)
     proc = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
     )
@@ -78,6 +78,9 @@ def read_via_xrootd(server, path, from_das=False):
         print("Loading error! This may help:")
         print("    voms-proxy-init --voms cms")
         print("    source /cvmfs/cms.cern.ch/cmsset_default.sh")
+        print(">>> stderr:")
+        for line in proc.stderr.readlines():
+            print(f">>> {line}")
     result = [server + r.rstrip().decode("utf-8") for r in result]
     return result
 
@@ -101,7 +104,7 @@ class SamplesInfo(object):
             except Exception:
                 print(k, v)
         self.is_mc = True
-        print(datasets_from)
+        # print(datasets_from)
         if "mu" in datasets_from:
             from config.datasets_muon import datasets
         elif "el" in datasets_from:
@@ -239,8 +242,10 @@ class SamplesInfo(object):
                 xsec = cross_sections[self.sample]
             if N > 0:
                 self.lumi_weights[self.sample] = xsec * self.lumi / N
+            elif N < 0:
+                self.lumi_weights[self.sample] = xsec * self.lumi / N
             else:
-                self.lumi_weights[self.sample] = 0
+                self.lumi_weights[self.sample] = 0.
             # print(f"{self.sample}: events={numevents}")
             return numevents
         else:
