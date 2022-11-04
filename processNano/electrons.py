@@ -76,7 +76,7 @@ def find_dielectron(objs, is_mc=True):
             - (pz1_ + pz2_) ** 2
         )
         mass = math.sqrt(max(0, m2))
-        dilep_ton_mass = mass
+        dilepton_mass = mass
         idx1 = obj1.el_idx
         idx2 = obj2.el_idx
         if is_mc:

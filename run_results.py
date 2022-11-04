@@ -69,7 +69,7 @@ parameters = {
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
-    "plots_path": "./plots/Dielectron/",
+    "plots_path": "./plots/test_%s/"%args.flavor,
     "dnn_models": {},
     "bdt_models": {},
     #

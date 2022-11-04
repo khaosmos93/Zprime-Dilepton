@@ -356,7 +356,7 @@ def fill_jets(output, variables, jets, is_mc=True):
         )
 
 
-def fill_bjets(output, variables, jets, leptons, is_mc=True):
+def initialize_bjet_var(variables):
     variable_names = [
         "bjet1_pt",
         "bjet1_eta",
@@ -411,6 +411,11 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
 
     for v in variable_names:
         variables[v] = -999.0
+
+    return variables
+
+def fill_bjets(output, variables, jets, leptons, flavor, is_mc=True):
+    print ("get here?")
     njet = len(jets)
 
     jet1 = jets[0]
@@ -430,12 +435,12 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
         "sf",
     ]:
         try:
-            variables[f"bjet1_{v}"] = jet1[v]
-            variables[f"bjet2_{v}"] = jet2[v]
+            variables.loc[variables[flavor], f"bjet1_{v}"] = jet1[v]
+            variables.loc[variables[flavor], f"bjet2_{v}"] = jet2[v]
         except Exception:
-            variables[f"bjet1_{v}"] = -999.0
-            variables[f"bjet2_{v}"] = -999.0
-    variables.bjet1_rap = rapidity(jet1)
+            variables.loc[variables[flavor], f"bjet1_{v}"] = -999.0
+            variables.loc[variables[flavor], f"bjet2_{v}"] = -999.0
+    variables.loc[variables[flavor], "bjet1_rap"] = rapidity(jet1)
 
     ll_columns = [
         "dilepton_mass",
@@ -448,7 +453,7 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
         "dilepton_phi_gen",
     ]
 
-    dileptons = output.loc[:, ll_columns]
+    dileptons = output.loc[output[flavor], ll_columns]
     dileptons.columns = [
         "mass",
         "pt",
@@ -459,10 +464,12 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
         "eta_gen",
         "phi_gen",
     ]
-
+    print("blubb")
     if njet > 0:
         bjet = p4(jet1, is_mc=is_mc)
+        print("blubb22")
         llj = p4_sum(dileptons, bjet, is_mc=is_mc)
+        print("blubb33")
         for v in [
             "pt",
             "eta",
@@ -474,9 +481,9 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
             "phi_gen",
         ]:
             try:
-                variables[f"bllj1_{v}"] = llj[v]
+                variables.loc[variables[flavor], f"bllj1_{v}"] = llj[v]
             except Exception:
-                variables[f"bllj1_{v}"] = -999.0
+                variables.loc[variables[flavor], f"bllj1_{v}"] = -999.0
 
         lep1 = p4(lepton1, is_mc=is_mc)
         lep2 = p4(lepton2, is_mc=is_mc)
@@ -484,17 +491,18 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
         ml1 = p4_sum(jet1, lepton1, is_mc=is_mc)
         ml2 = p4_sum(jet1, lepton2, is_mc=is_mc)
         try:
-            variables["b1l1_mass"] = ml1["mass"]
+            variables.loc[variables[flavor], "b1l1_mass"] = ml1["mass"]
         except Exception:
-            variables["b1l1_mass"] = 100000
+            variables.loc[variables[flavor], "b1l1_mass"] = 100000
         try:
-            variables["b1l2_mass"] = ml2["mass"]
+            variables.loc[variables[flavor], "b1l2_mass"] = ml2["mass"]
         except Exception:
-            variables["b1l2_mass"] = 100000
+            variables.loc[variables[flavor], "b1l2_mass"] = 100000
 
-        variables["min_b1l_mass"] = variables[["b1l1_mass", "b1l2_mass"]].min(axis=1)
-        variables["min_bl_mass"] = variables[["b1l1_mass", "b1l2_mass"]].min(axis=1)
+        variables.loc[variables[flavor], "min_b1l_mass"] = variables.loc[variables[flavor], ["b1l1_mass", "b1l2_mass"]].min(axis=1)
+        variables.loc[variables[flavor], "min_bl_mass"] = variables.loc[variables[flavor], ["b1l1_mass", "b1l2_mass"]].min(axis=1)
 
+    print("blubb2")
     if njet > 1:
         bjet2 = p4(jet1, is_mc=is_mc)
         llj2 = p4_sum(dileptons, bjet2, is_mc=is_mc)
@@ -509,9 +517,9 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
             "phi_gen",
         ]:
             try:
-                variables[f"bllj2_{v}"] = llj[v]
+                variables.loc[variables[flavor], f"bllj2_{v}"] = llj[v]
             except Exception:
-                variables[f"bllj2_{v}"] = -999.0
+                variables.loc[variables[flavor], f"bllj2_{v}"] = -999.0
 
         lep1 = p4(lepton1, is_mc=is_mc)
         lep2 = p4(lepton2, is_mc=is_mc)
@@ -519,20 +527,21 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
         ml1 = p4_sum(jet2, lepton1, is_mc=is_mc)
         ml2 = p4_sum(jet2, lepton2, is_mc=is_mc)
         try:
-            variables["b2l1_mass"] = ml1["mass"]
+            variables.loc[variables[flavor], "b2l1_mass"] = ml1["mass"]
         except Exception:
-            variables["b2l1_mass"] = 100000
+            variables.loc[variables[flavor], "b2l1_mass"] = 100000
         try:
-            variables["b2l2_mass"] = ml2["mass"]
+            variables.loc[variables[flavor], "b2l2_mass"] = ml2["mass"]
         except Exception:
-            variables["b2l2_mass"] = 100000
+            variables.loc[variables[flavor], "b2l2_mass"] = 100000
 
-        variables["min_b2l_mass"] = variables[["b2l1_mass", "b2l2_mass"]].min(axis=1)
-        variables["min_bl_mass"] = variables[
+        variables.loc[variables[flavor], "min_b2l_mass"] = variables.loc[variables[flavor], ["b2l1_mass", "b2l2_mass"]].min(axis=1)
+        variables.loc[variables[flavor], "min_bl_mass"] = variables.loc[variables[flavor],
             ["b1l1_mass", "b1l2_mass", "b2l1_mass", "b2l2_mass"]
         ].min(axis=1)
 
-        variables.bjet2_rap = rapidity(jet2)
+        print("blubb3")
+        variables.loc[variables[flavor], ".bjet2_rap"] = rapidity(jet2)
         # Fill dijet variables
         jj = p4_sum(jet1, jet2, is_mc=is_mc)
         for v in [
@@ -546,19 +555,20 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
             "mass_gen",
         ]:
             try:
-                variables[f"bjj_{v}"] = jj[v]
+                variables.loc[variables[flavor], f"bjj_{v}"] = jj[v]
             except Exception:
-                variables[f"bjj_{v}"] = -999.0
+                variables.loc[variables[flavor], f"bjj_{v}"] = -999.0
 
-        variables.bjj_mass_log = np.log(variables.bjj_mass)
+        variables.loc[variables[flavor], "bjj_mass_log"] = np.log(variables.loc[variables[flavor], "bjj_mass"])
 
-        variables.bjj_dEta, variables.bjj_dPhi, _ = delta_r(
-            variables.bjet1_eta,
-            variables.bjet2_eta,
-            variables.bjet1_phi,
-            variables.bjet2_phi,
+        variables.loc[variables[flavor], "bjj_dEta"], variables.loc[variables[flavor], "bjj_dPhi"], _ = delta_r(
+            variables.loc[variables[flavor], "bjet1_eta"],
+            variables.loc[variables[flavor], "bjet2_eta"],
+            variables.loc[variables[flavor], "bjet1_phi"],
+            variables.loc[variables[flavor], "bjet2_phi"],
         )
 
+        print("blubb4")
         # Fill dilepton-dibjet system variables
         jj_columns = [
             "bjj_pt",
@@ -571,7 +581,7 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
             "bjj_mass_gen",
         ]
 
-        dijets = variables.loc[:, jj_columns]
+        dijets = variables.loc[variables[flavor], jj_columns]
 
         # careful with renaming
         dijets.columns = [
@@ -597,9 +607,9 @@ def fill_bjets(output, variables, jets, leptons, is_mc=True):
             "phi_gen",
         ]:
             try:
-                variables[f"blljj_{v}"] = lljj[v]
+                variables.loc[variables[flavor], f"blljj_{v}"] = lljj[v]
             except Exception:
-                variables[f"blljj_{v}"] = -999.0
+                variables.loc[variables[flavor], f"blljj_{v}"] = -999.0
 
 
 def jet_id(jets, parameters, year):

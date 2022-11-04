@@ -54,7 +54,7 @@ parameters = {
     "years": args.years,
     # "label": "moreKiller",
     # "label": "noGenWeight",
-    "label": "combinedTest",
+    "label": "test",
     "flavor": args.flavor,
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["inclusive", "bb", "be"],

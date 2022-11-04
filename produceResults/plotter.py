@@ -97,6 +97,7 @@ def plotter(client, parameters, hist_df=None, timer=None):
 
     arg_plot = {
         "year": parameters["years"],
+        "flavor": [parameters["flavor"]],
         "region": parameters["regions"],
         "channel": parameters["channels"],
         "var_name": [
@@ -125,6 +126,7 @@ def plotter2D(client, parameters, hist_df=None, timer=None):
             return []
     arg_plot = {
         "year": parameters["years"],
+        "flavor": [parameters["flavor"]],
         "region": parameters["regions"],
         "channel": parameters["channels"],
         "var_name1": [
@@ -155,6 +157,9 @@ def plot(args, parameters={}):
     else:
         var = Variable(var_name, var_name, 50, 0, 5)
 
+    if args["flavor"] == "el":
+        var.caption = var.caption.replace("\mu\mu","ee")
+    print (var.caption)
     if hist.shape[0] == 0:
         return
 

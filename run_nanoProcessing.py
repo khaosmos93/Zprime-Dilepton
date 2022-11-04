@@ -174,7 +174,7 @@ def submit_job(parameters):
     }
 
     if parameters["channel"] == "mu" or parameters["channel"] == "el":
-        from processNano.dilepton_processor import DileptonProcessor as event_processor
+        from processNano.dilepton_processor_new import DileptonProcessor as event_processor
     elif parameters["channel"] == "eff_mu":
         from processNano.dimuon_eff_processor import (
             DimuonEffProcessor as event_processor,
@@ -358,12 +358,12 @@ if __name__ == "__main__":
             #    continue
             # if "WWinclusive" not in sample:
             # if "dy200to400" not in sample:
-            # if sample != "ttbar_lep_inclusive":
+            #if sample != "ttbar_lep_M500to800":
             #    continue
-            #if "dy1J_M6000toInf" not in sample:
+            if "dy1J_M6000toInf" not in sample:
             #if "data_A" not in sample:
             # if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
-            #    continue
+                continue
 
             #if group != "other_mc":
             #    continue

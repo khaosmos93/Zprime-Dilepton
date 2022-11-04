@@ -96,7 +96,7 @@ def p4_sum(obj1, obj2, is_mc=True,eScale="Nominal"):
             "rap",
         ],
     ).fillna(0.0)
-    
+    print ("here?") 
     for obj in [obj1, obj2]:
         #electron energy scale uncertainty, 2% for barrel electrons and 1% for endcap electrons (to be revisited for UL)
         obj["eScaleFac"] = 1.0
@@ -137,11 +137,13 @@ def p4_sum(obj1, obj2, is_mc=True,eScale="Nominal"):
 
 
 
-
+        print ("herei2?")
         px_ = obj.pt * np.cos(obj.phi) * obj.eScaleFac
         py_ = obj.pt * np.sin(obj.phi) * obj.eScaleFac
         pz_ = obj.pt * np.sinh(obj.eta) * obj.eScaleFac
         e_ = np.sqrt(px_ ** 2 + py_ ** 2 + pz_ ** 2 + obj.mass ** 2)
+        print ("herei3?")
+        print (py_)
         result.px += px_
         result.py += py_
         result.pz += pz_
@@ -150,20 +152,26 @@ def p4_sum(obj1, obj2, is_mc=True,eScale="Nominal"):
             px_gen_ = obj.pt_gen * np.cos(obj.phi_gen)
             py_gen_ = obj.pt_gen * np.sin(obj.phi_gen)
             pz_gen_ = obj.pt_gen * np.sinh(obj.eta_gen)
+            print ("beforebefore?")
             e_gen_ = np.sqrt(px_gen_ ** 2 + py_gen_ ** 2 + pz_gen_ ** 2 + obj.mass ** 2)
+            print ("after?")
 
         if is_mc:
             result.px_gen += px_gen_
             result.py_gen += py_gen_
             result.pz_gen += pz_gen_
             result.e_gen += e_gen_
-
-    result.pt = np.sqrt(result.py ** 2 + result.py ** 2)
+    print(result.py)
+    print ("grab")
+    result.pt = np.sqrt(result.px ** 2 + result.py ** 2)
+    print ("clockasdf?")
     result.eta = np.arcsinh(result.pz / result.pt)
     result.phi = np.arctan2(result.py, result.px)
+    print ("before?")
     result.mass = np.sqrt(
         result.e ** 2 - result.px ** 2 - result.py ** 2 - result.pz ** 2
     )
+    print ("herei4?")
     if is_mc:
         result.pt_gen = np.sqrt(result.px_gen ** 2 + result.py_gen ** 2)
         result.eta_gen = np.arcsinh(result.pz_gen / result.pt_gen)
@@ -174,6 +182,7 @@ def p4_sum(obj1, obj2, is_mc=True,eScale="Nominal"):
             - result.py_gen ** 2
             - result.pz_gen ** 2
         )
+        print ("herei5?")
     result.rap = 0.5 * np.log((result.e + result.pz) / (result.e - result.pz))
     return result
 
@@ -254,14 +263,17 @@ def cross(vec1, vec2):
 # https://root.cern.ch/doc/master/classTLorentzVector
 # .html#a8d77f01dc7f409b237937012c382fbfb
 def boost(vector, boost_vector):
+
     x = vector[0]
     y = vector[1]
     z = vector[2]
     t = vector[3]
+
     bx = boost_vector[0]
     by = boost_vector[1]
     bz = boost_vector[2]
     b2 = bx * bx + by * by + bz * bz
+
     gamma = 1.0 / np.sqrt(1.0 - b2)
     bp = bx * x + by * y + bz * z
     gamma2 = np.zeros(len(x))
@@ -270,6 +282,7 @@ def boost(vector, boost_vector):
     y = y + gamma2 * bp * by + gamma * by * t
     z = z + gamma2 * bp * bz + gamma * bz * t
     t = gamma * (t + bp)
+
     return [x, y, z, t]
 
 
