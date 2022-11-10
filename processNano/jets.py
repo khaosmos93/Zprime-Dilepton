@@ -5,9 +5,142 @@ from processNano.utils import p4, p4_sum, delta_r, rapidity
 import correctionlib
 import pickle
 from coffea.lookup_tools.dense_lookup import dense_lookup
+from coffea.nanoevents.methods import candidate
 from coffea.btag_tools import BTagScaleFactor
 from config.parameters import parameters
 
+
+def btagSF_new(jets, year, correction="shape", is_UL=True):
+
+    if is_UL:
+        if correction == "wp":
+            jets["btag_sf_wp"] = 1.0
+            systs = [
+                "central",
+                "up",
+                "down",
+                "up_correlated",
+                "up_uncorrelated",
+                "down_correlated",
+                "down_uncorrelated",
+                "up_isr",
+                "down_isr",
+                "up_fsr",
+                "down_fsr",
+                "up_hdamp",
+                "down_hdamp",
+                "up_jes",
+                "down_jes",
+                "up_jer",
+                "down_jer",
+                "up_pileup",
+                "down_pileup",
+                "up_qcdscale",
+                "down_qcdscale",
+                "up_statistic",
+                "down_statistic",
+                "up_topmass",
+                "down_topmass",
+                "up_type3",
+                "down_type3",
+            ]
+        else:
+            jets["btag_sf_shape"] = 1.0
+            systs = ["central"]
+        cset = correctionlib.CorrectionSet.from_file(parameters["btag_sf_UL"][year])
+    else:
+        if correction == "wp":
+            systs = [
+                "central",
+                "up",
+                "down",
+                "up_correlated",
+                "up_uncorrelated",
+                "down_correlated",
+                "down_uncorrelated",
+            ]
+        else:
+            systs = ["central"]
+
+        cset = BTagScaleFactor(parameters["btag_sf_pre_UL"][year], "medium")
+
+    mask = (jets.pt > 20.0) & (abs(jets.eta) < 2.4) & (jets.jetId >= 2)
+
+    for syst in systs:
+        if correction == "shape":
+
+            jets["btag_sf_shape_{syst}"] = 1.0
+            j, nj = ak.flatten(jets[mask]), ak.num(jets[mask])
+
+            if is_UL:
+                sf = cset["deepJet_shape"].evaluate(syst, np.array(j.hadronFlavour), np.abs(np.array(j.eta)), np.array(j.pt), np.array(j.btagDeepFlavB))
+                sf = ak.unflatten(sf,nj)
+
+            if syst == "central":
+                jets[mask]["btag_sf_shape"] = sf
+
+            else:
+                jets[mask]["btag_sf_shape_{syst}"] = sf
+
+        elif correction == "wp":
+
+            jets["btag_sf_wp_%s"%syst] = 1.0
+            path_eff = parameters["btag_sf_eff"][year]
+            wp = parameters["UL_btag_medium"][year]
+            with open(path_eff, "rb") as handle:
+                eff = pickle.load(handle)
+           
+            efflookup = dense_lookup(eff.values(), [ax.edges for ax in eff.axes])
+            keys = [0,4,5]
+            for key in keys:
+                if key == 0: 
+                    mask_flavor = jets["hadronFlavour"] < 4
+                else:
+                    mask_flavor = jets["hadronFlavour"] > 4
+
+                j = ak.flatten(jets[mask & mask_flavor])
+                nj = ak.num(jets[mask & mask_flavor])
+                flavor = j.hadronFlavour.to_numpy()
+                eta = np.abs(j.eta.to_numpy())
+                pt = j.pt.to_numpy()
+                mva = j.btagDeepFlavB.to_numpy()
+
+                if is_UL:
+                    if key < 4:
+                        corr = "deepJet_incl"
+                    else:
+                        corr = "deepJet_comb"
+                    try:
+                        fac = cset[corr].evaluate(syst, "M", flavor, eta, pt)
+                    except Exception:
+                        fac = cset[corr].evaluate("central", "M", flavor, eta, pt)
+
+                else:
+                    try:
+
+                        fac = cset.eval(syst, flavor, eta, pt, wp)
+                    except Exception:
+                        fac = cset.eval("central", flavor, eta, pt, wp)
+
+                prob = efflookup(pt, eta, key)
+                prob_nosf = np.copy(prob)
+                prob_sf = np.copy(prob) * fac
+                prob_sf[mva < wp] = 1.0 - prob_sf[mva < wp]
+                prob_nosf[mva < wp] = 1.0 - prob_nosf[mva < wp]
+                sf = prob_sf / prob_nosf
+                sf = ak.unflatten(sf,nj)
+
+                if syst == "central":
+                    jets[mask & mask_flavor]["btag_sf_wp"] = sf
+                else:
+                    jets[mask & mask_flavor][f"btag_sf_wp_{syst}"] = sf
+
+#            if syst == "central":
+#                jets["btag_sf_wp"].fill_none(1.0)
+#            else:
+#                jets[f"btag_sf_wp_{syst}"].fill_none(1.0)
+
+    return jets
 
 def btagSF(df, year, correction="shape", is_UL=True):
 
@@ -146,7 +279,7 @@ def prepare_jets(df, is_mc):
         )
 
 
-def fill_jets(output, variables, jets, is_mc=True):
+def fill_jets(output, variables, jets, njet, muons, electrons, is_mc=True):
     variable_names = [
         "jet1_pt",
         "jet1_eta",
@@ -197,163 +330,217 @@ def fill_jets(output, variables, jets, is_mc=True):
 
     for v in variable_names:
         variables[v] = -999.0
-    njet = len(jets)
 
     jet1 = jets[0]
     jet2 = jets[1]
+
+    jet1Mask = ~ak.is_none(jet1)
+    jet2Mask = ~ak.is_none(jet2)
+
     # Fill single jet variables
     for v in [
         "pt",
         "eta",
         "phi",
         "mass",
-        "pt_gen",
-        "eta_gen",
-        "phi_gen",
+#        "pt_gen",
+#        "eta_gen",
+#        "phi_gen",
         "qgl",
         "btagDeepB",
         "btagDeepFlavB",
     ]:
-        try:
-            variables[f"jet1_{v}"] = jet1[v]
-            variables[f"jet2_{v}"] = jet2[v]
-        except Exception:
-            variables[f"jet1_{v}"] = -999.0
-            variables[f"jet2_{v}"] = -999.0
-    variables.jet1_rap = rapidity(jet1)
+        variables.loc[np.array(jet1Mask), f"jet1_{v}"] = getattr(jet1[jet1Mask], v)
+        variables.loc[np.array(jet2Mask), f"jet2_{v}"] = getattr(jet2[jet2Mask], v)
 
-    if njet > 1:
-        variables.jet2_rap = rapidity(jet2)
-        # Fill dijet variables
-        jj = p4_sum(jet1, jet2, is_mc=is_mc)
+    variables.loc[np.array(jet1Mask), "jet1_rap"] = rapidity(jet1[jet1Mask])
+    variables.loc[np.array(jet2Mask), "jet2_rap"] = rapidity(jet2[jet2Mask])
 
-        for v in [
-            "pt",
-            "eta",
-            "phi",
-            "mass",
-            "pt_gen",
-            "eta_gen",
-            "phi_gen",
-            "mass_gen",
-        ]:
-            try:
-                variables[f"jj_{v}"] = jj[v]
-            except Exception:
-                variables[f"jj_{v}"] = -999.0
+    jet1Filtered = jet1[jet2Mask]
+    jet2Filtered = jet2[jet2Mask]
 
-        variables.jj_mass_log = np.log(variables.jj_mass)
+    jet1Filtered["charge"] = 1 
+    jet2Filtered["charge"] = -1 
 
-        variables.jj_dEta, variables.jj_dPhi, _ = delta_r(
-            variables.jet1_eta,
-            variables.jet2_eta,
-            variables.jet1_phi,
-            variables.jet2_phi,
-        )
+    jet1P4s = ak.zip({
+        "pt": jet1Filtered.pt,
+        "eta": jet1Filtered.eta,
+        "phi": jet1Filtered.phi,
+        "mass": jet1Filtered.mass,
+        "charge": jet1Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
 
-        # Fill dilepton-dijet system variables
-        ll_columns = [
-           "dilepton_pt",
-           "dilepton_eta",
-           "dilepton_phi",
-           "dilepton_mass",
-           "dilepton_pt_gen",
-           "dilepton_eta_gen",
-           "dilepton_phi_gen",
-           "dilepton_mass_gen",
-        ]
-        jj_columns = [
-            "jj_pt",
-            "jj_eta",
-            "jj_phi",
-            "jj_mass",
-            "jj_pt_gen",
-            "jj_eta_gen",
-            "jj_phi_gen",
-            "jj_mass_gen",
-        ]
+    jet2P4s = ak.zip({
+        "pt": jet2Filtered.pt,
+        "eta": jet2Filtered.eta,
+        "phi": jet2Filtered.phi,
+        "mass": jet2Filtered.mass,
+        "charge": jet2Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
 
-        dileptons = output.loc[:, ll_columns]
-        dijets = variables.loc[:, jj_columns]
+    jj = jet1P4s + jet2P4s
 
-        # careful with renaming
-        dileptons.columns = [
-            "mass",
-            "pt",
-            "eta",
-            "phi",
-            "mass_gen",
-            "pt_gen",
-            "eta_gen",
-            "phi_gen",
-        ]
-        dijets.columns = [
-            "pt",
-            "eta",
-            "phi",
-            "mass",
-            "mass_gen",
-            "pt_gen",
-            "eta_gen",
-            "phi_gen",
-        ]
+    jet1Filtered.matched_gen["charge"] = 1
+    jet2Filtered.matched_gen["charge"] = -1
 
-        lljj = p4_sum(dileptons, dijets, is_mc=is_mc)
-        for v in [
-            "pt",
-            "eta",
-            "phi",
-            "mass",
-            "mass_gen",
-            "pt_gen",
-            "eta_gen",
-            "phi_gen",
-        ]:
-            try:
-                variables[f"lljj_{v}"] = lljj[v]
-            except Exception:
-                variables[f"lljj_{v}"] = -999.0
+    jet1GenP4s = ak.zip({
+        "pt": jet1Filtered.matched_gen.pt,
+        "eta": jet1Filtered.matched_gen.eta,
+        "phi": jet1Filtered.matched_gen.phi,
+        "mass": jet1Filtered.matched_gen.mass,
+        "charge": jet1Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
 
-        dilepton_pt, dilepton_eta, dilepton_phi, dilepton_rap = (
-            output.dilepton_pt,
-            output.dilepton_eta,
-            output.dilepton_phi,
-            output.dilepton_rap,
-        )
+    jet2GenP4s = ak.zip({
+        "pt": jet2Filtered.matched_gen.pt,
+        "eta": jet2Filtered.matched_gen.eta,
+        "phi": jet2Filtered.matched_gen.phi,
+        "mass": jet2Filtered.matched_gen.mass,
+        "charge": jet2Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
 
-        variables.zeppenfeld = dilepton_eta - 0.5 * (
-            variables.jet1_eta + variables.jet2_eta
-        )
+    jjGen = jet1GenP4s + jet2GenP4s
 
-        variables.rpt = variables.lljj_pt / (
-            dilepton_pt + variables.jet1_pt + variables.jet2_pt
-        )
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "mass",
+    ]:
+        variables.loc[np.array(jet2Mask), f"jj_{v}"] = getattr(jj, v)
 
-        ll_ystar = dilepton_rap - (variables.jet1_rap + variables.jet2_rap) / 2
+#    for v in [
+#        "pt",
+#        "eta",
+#        "phi",
+#        "mass",
+#    ]:
+#        variables.loc[np.array(jet2Mask), f"jj_{v}_gen"] = getattr(jjGen, v)
 
-        ll_zstar = abs(ll_ystar / (variables.jet1_rap - variables.jet2_rap))
+    variables.jj_mass_log = np.log(variables.jj_mass)
 
-        variables.ll_zstar_log = np.log(ll_zstar)
+    variables.jj_dEta, variables.jj_dPhi, _ = delta_r(
+        variables.jet1_eta,
+        variables.jet2_eta,
+        variables.jet1_phi,
+        variables.jet2_phi,
+    )
 
-        variables.llj1_dEta, variables.llj1_dPhi, variables.llj1_dR = delta_r(
-            dilepton_eta, variables.jet1_eta, dilepton_phi, variables.jet1_phi
-        )
+    muJet1 = jet1[output["isDimuon"]]
+    muJet2 = jet2[output["isDimuon"]]
 
-        variables.llj2_dEta, variables.llj2_dPhi, variables.llj2_dR = delta_r(
-            dilepton_eta, variables.jet2_eta, dilepton_phi, variables.jet2_phi
-        )
+    muJet2Mask = ~ak.is_none(muJet2)
 
-        variables.llj_min_dEta = np.where(
-            variables.llj1_dEta,
-            variables.llj2_dEta,
-            (variables.llj1_dEta < variables.llj2_dEta),
-        )
+    muJet1Filtered = muJet1[muJet2Mask]
+    muJet2Filtered = muJet2[muJet2Mask]
 
-        variables.llj_min_dPhi = np.where(
-            variables.llj1_dPhi,
-            variables.llj2_dPhi,
-            (variables.llj1_dPhi < variables.llj2_dPhi),
-        )
+    muJet1Filtered["charge"] = 1 
+    muJet2Filtered["charge"] = -1 
+
+    muJet1P4s = ak.zip({
+        "pt": muJet1Filtered.pt,
+        "eta": muJet1Filtered.eta,
+        "phi": muJet1Filtered.phi,
+        "mass": muJet1Filtered.mass,
+        "charge": muJet1Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    muJet2P4s = ak.zip({
+        "pt": muJet2Filtered.pt,
+        "eta": muJet2Filtered.eta,
+        "phi": muJet2Filtered.phi,
+        "mass": muJet2Filtered.mass,
+        "charge": muJet2Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    mmjj = muons[0][muJet2Mask] + muons[1][muJet2Mask] + muJet1P4s + muJet2P4s
+
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "mass",
+    ]:
+        variables.loc[output["isDimuon"] & np.array(jet2Mask), f"lljj_{v}"] = getattr(mmjj, v)
+
+    elJet1 = jet1[output["isDielectron"]]
+    elJet2 = jet2[output["isDielectron"]]
+
+    elJet2Mask = ~ak.is_none(elJet2)
+
+    elJet1Filtered = elJet1[elJet2Mask]
+    elJet2Filtered = elJet2[elJet2Mask]
+
+    elJet1Filtered["charge"] = 1 
+    elJet2Filtered["charge"] = -1 
+
+    elJet1P4s = ak.zip({
+        "pt": elJet1Filtered.pt,
+        "eta": elJet1Filtered.eta,
+        "phi": elJet1Filtered.phi,
+        "mass": elJet1Filtered.mass,
+        "charge": elJet1Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    elJet2P4s = ak.zip({
+        "pt": elJet2Filtered.pt,
+        "eta": elJet2Filtered.eta,
+        "phi": elJet2Filtered.phi,
+        "mass": elJet2Filtered.mass,
+        "charge": elJet2Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+
+    eejj = electrons[0][elJet2Mask] + electrons[1][elJet2Mask] + elJet1P4s + elJet2P4s
+
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "mass",
+    ]:
+        variables.loc[output["isDielectron"] & np.array(jet2Mask), f"lljj_{v}"] = getattr(eejj, v)
+
+    dilepton_pt, dilepton_eta, dilepton_phi, dilepton_rap = (
+       output.dilepton_pt,
+       output.dilepton_eta,
+       output.dilepton_phi,
+       output.dilepton_rap,
+    )
+
+    variables.zeppenfeld = dilepton_eta - 0.5 * (
+       variables.jet1_eta + variables.jet2_eta
+    )
+
+    variables.rpt = variables.lljj_pt / (
+        dilepton_pt + variables.jet1_pt + variables.jet2_pt
+    )
+
+    ll_ystar = dilepton_rap - (variables.jet1_rap + variables.jet2_rap) / 2
+
+    ll_zstar = abs(ll_ystar / (variables.jet1_rap - variables.jet2_rap))
+
+    variables.ll_zstar_log = np.log(ll_zstar)
+
+    variables.llj1_dEta, variables.llj1_dPhi, variables.llj1_dR = delta_r(
+        dilepton_eta, variables.jet1_eta, dilepton_phi, variables.jet1_phi
+    )
+
+    variables.llj2_dEta, variables.llj2_dPhi, variables.llj2_dR = delta_r(
+        dilepton_eta, variables.jet2_eta, dilepton_phi, variables.jet2_phi
+    )
+
+    variables.llj_min_dEta = np.where(
+        variables.llj1_dEta,
+        variables.llj2_dEta,
+        (variables.llj1_dEta < variables.llj2_dEta),
+    )
+
+    variables.llj_min_dPhi = np.where(
+        variables.llj1_dPhi,
+        variables.llj2_dPhi,
+        (variables.llj1_dPhi < variables.llj2_dPhi),
+    )
 
 
 def initialize_bjet_var(variables):
@@ -415,201 +602,189 @@ def initialize_bjet_var(variables):
     return variables
 
 def fill_bjets(output, variables, jets, leptons, flavor, is_mc=True):
-    print ("get here?")
-    njet = len(jets)
+
 
     jet1 = jets[0]
     jet2 = jets[1]
     lepton1 = leptons[0]
     lepton2 = leptons[1]
-    # Fill single jet variables
+    jet1Mask = ~ak.is_none(jet1)
+    jet2Mask = ~ak.is_none(jet2)
+
+   # Fill single jet variables
     for v in [
         "pt",
         "eta",
         "phi",
-        "pt_gen",
-        "eta_gen",
-        "phi_gen",
+#        "pt_gen",
+#        "eta_gen",
+#        "phi_gen",
         "qgl",
         "btagDeepB",
-        "sf",
+        "btag_sf_shape",
+        "btag_sf_wp",
     ]:
-        try:
-            variables.loc[variables[flavor], f"bjet1_{v}"] = jet1[v]
-            variables.loc[variables[flavor], f"bjet2_{v}"] = jet2[v]
-        except Exception:
-            variables.loc[variables[flavor], f"bjet1_{v}"] = -999.0
-            variables.loc[variables[flavor], f"bjet2_{v}"] = -999.0
-    variables.loc[variables[flavor], "bjet1_rap"] = rapidity(jet1)
+        variables.loc[np.array(jet1Mask), f"bjet1_{v}"] = getattr(jet1[jet1Mask], v)
+        variables.loc[np.array(jet2Mask), f"bjet2_{v}"] = getattr(jet2[jet2Mask], v)
 
-    ll_columns = [
-        "dilepton_mass",
-        "dilepton_pt",
-        "dilepton_eta",
-        "dilepton_phi",
-        "dilepton_mass_gen",
-        "dilepton_pt_gen",
-        "dilepton_eta_gen",
-        "dilepton_phi_gen",
-    ]
 
-    dileptons = output.loc[output[flavor], ll_columns]
-    dileptons.columns = [
-        "mass",
+    variables.loc[np.array(jet1Mask), "bjet1_rap"] = rapidity(jet1[jet1Mask])
+    variables.loc[np.array(jet2Mask), "bjet2_rap"] = rapidity(jet2[jet2Mask])
+
+    jet1Filtered = jet1[jet2Mask]
+    jet2Filtered = jet2[jet2Mask]
+
+    jet1Filtered["charge"] = 1 
+    jet2Filtered["charge"] = -1 
+
+    jet1P4s = ak.zip({
+        "pt": jet1Filtered.pt,
+        "eta": jet1Filtered.eta,
+        "phi": jet1Filtered.phi,
+        "mass": jet1Filtered.mass,
+        "charge": jet1Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    jet2P4s = ak.zip({
+        "pt": jet2Filtered.pt,
+        "eta": jet2Filtered.eta,
+        "phi": jet2Filtered.phi,
+        "mass": jet2Filtered.mass,
+        "charge": jet2Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    jj = jet1P4s + jet2P4s
+
+    jet1Filtered.matched_gen["charge"] = 1
+    jet2Filtered.matched_gen["charge"] = -1
+
+    jet1GenP4s = ak.zip({
+        "pt": jet1Filtered.matched_gen.pt,
+        "eta": jet1Filtered.matched_gen.eta,
+        "phi": jet1Filtered.matched_gen.phi,
+        "mass": jet1Filtered.matched_gen.mass,
+        "charge": jet1Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    jet2GenP4s = ak.zip({
+        "pt": jet2Filtered.matched_gen.pt,
+        "eta": jet2Filtered.matched_gen.eta,
+        "phi": jet2Filtered.matched_gen.phi,
+        "mass": jet2Filtered.matched_gen.mass,
+        "charge": jet2Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    jjGen = jet1GenP4s + jet2GenP4s
+    for v in [
         "pt",
         "eta",
         "phi",
-        "mass_gen",
-        "pt_gen",
-        "eta_gen",
-        "phi_gen",
-    ]
-    print("blubb")
-    if njet > 0:
-        bjet = p4(jet1, is_mc=is_mc)
-        print("blubb22")
-        llj = p4_sum(dileptons, bjet, is_mc=is_mc)
-        print("blubb33")
-        for v in [
-            "pt",
-            "eta",
-            "phi",
-            "mass",
-            "mass_gen",
-            "pt_gen",
-            "eta_gen",
-            "phi_gen",
+        "mass",
+    ]:
+        variables.loc[np.array(jet2Mask), f"bjj_{v}"] = getattr(jj, v)
+    #for v in [
+    #    "pt",
+    #    "eta",
+    #    "phi",
+    #    "mass",
+    #]:
+    #    variables.loc[np.array(jet2Mask), f"bjj_{v}_gen"] = getattr(jjGen, v)
+
+    variables.bjj_mass_log = np.log(variables.bjj_mass)
+
+
+    variables.bjj_dEta, variables.bjj_dPhi, _ = delta_r(
+        variables.bjet1_eta,
+        variables.bjet2_eta,
+        variables.bjet1_phi,
+        variables.bjet2_phi,
+    )
+
+    lJet1 = jet1[output[flavor]]
+    lJet2 = jet2[output[flavor]]
+
+    lJet1Mask = ~ak.is_none(lJet1)
+    lJet2Mask = ~ak.is_none(lJet2)
+
+    lJet1Filtered = lJet1[lJet1Mask]
+    lJet1Filtered["charge"] = 1 
+
+    lJet1P4s = ak.zip({
+        "pt": lJet1Filtered.pt,
+        "eta": lJet1Filtered.eta,
+        "phi": lJet1Filtered.phi,
+        "mass": lJet1Filtered.mass,
+        "charge": lJet1Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    llj = leptons[0][lJet1Mask] + leptons[1][lJet1Mask] + lJet1P4s
+
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "mass",
+    ]:
+        variables.loc[variables[flavor] & jet1Mask, f"bllj1_{v}"] = getattr(llj, v)
+
+    ml1 = leptons[0][lJet1Mask] + lJet1P4s
+    ml2 = leptons[1][lJet1Mask] + lJet1P4s
+    variables.loc[variables[flavor] & jet1Mask, "b1l1_mass"] = ml1.mass
+    variables.loc[variables[flavor] & jet1Mask, "b1l2_mass"] = ml2.mass
+
+    variables.loc[variables[flavor], "min_b1l_mass"] = variables.loc[variables[flavor], ["b1l1_mass", "b1l2_mass"]].min(axis=1)
+    variables.loc[variables[flavor], "min_bl_mass"] = variables.loc[variables[flavor], ["b1l1_mass", "b1l2_mass"]].min(axis=1)
+
+    lJet1Filtered = lJet1[lJet2Mask]
+    lJet2Filtered = lJet2[lJet2Mask]
+
+    lJet1Filtered["charge"] = 1 
+    lJet2Filtered["charge"] = -1 
+
+    lJet1P4s = ak.zip({
+        "pt": lJet1Filtered.pt,
+        "eta": lJet1Filtered.eta,
+        "phi": lJet1Filtered.phi,
+        "mass": lJet1Filtered.mass,
+        "charge": lJet1Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    lJet2P4s = ak.zip({
+        "pt": lJet2Filtered.pt,
+        "eta": lJet2Filtered.eta,
+        "phi": lJet2Filtered.phi,
+        "mass": lJet2Filtered.mass,
+        "charge": lJet2Filtered.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    llj2 = leptons[0][lJet2Mask] + lJet1P4s + lJet2P4s
+    lljj = leptons[0][lJet2Mask] + leptons[1][lJet2Mask] + lJet1P4s + lJet2P4s
+
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "mass",
+    ]:
+        variables.loc[variables[flavor] & jet2Mask, f"bllj2_{v}"] = getattr(llj2, v)
+
+    ml1 = leptons[0][lJet2Mask] + lJet2P4s
+    ml2 = leptons[1][lJet2Mask] + lJet2P4s
+    variables.loc[variables[flavor] & jet2Mask, "b2l1_mass"] = ml1.mass
+    variables.loc[variables[flavor] & jet2Mask, "b2l2_mass"] = ml2.mass
+
+    variables.loc[variables[flavor], "min_b2l_mass"] = variables.loc[variables[flavor], ["b2l1_mass", "b2l2_mass"]].min(axis=1)
+    variables.loc[variables[flavor], "min_bl_mass"] = variables.loc[variables[flavor],
+        ["b1l1_mass", "b1l2_mass", "b2l1_mass", "b2l2_mass"]
+    ].min(axis=1)
+
+    for v in [
+        "pt",
+        "eta",
+        "phi",
+        "mass",
         ]:
-            try:
-                variables.loc[variables[flavor], f"bllj1_{v}"] = llj[v]
-            except Exception:
-                variables.loc[variables[flavor], f"bllj1_{v}"] = -999.0
-
-        lep1 = p4(lepton1, is_mc=is_mc)
-        lep2 = p4(lepton2, is_mc=is_mc)
-
-        ml1 = p4_sum(jet1, lepton1, is_mc=is_mc)
-        ml2 = p4_sum(jet1, lepton2, is_mc=is_mc)
-        try:
-            variables.loc[variables[flavor], "b1l1_mass"] = ml1["mass"]
-        except Exception:
-            variables.loc[variables[flavor], "b1l1_mass"] = 100000
-        try:
-            variables.loc[variables[flavor], "b1l2_mass"] = ml2["mass"]
-        except Exception:
-            variables.loc[variables[flavor], "b1l2_mass"] = 100000
-
-        variables.loc[variables[flavor], "min_b1l_mass"] = variables.loc[variables[flavor], ["b1l1_mass", "b1l2_mass"]].min(axis=1)
-        variables.loc[variables[flavor], "min_bl_mass"] = variables.loc[variables[flavor], ["b1l1_mass", "b1l2_mass"]].min(axis=1)
-
-    print("blubb2")
-    if njet > 1:
-        bjet2 = p4(jet1, is_mc=is_mc)
-        llj2 = p4_sum(dileptons, bjet2, is_mc=is_mc)
-        for v in [
-            "pt",
-            "eta",
-            "phi",
-            "mass",
-            "mass_gen",
-            "pt_gen",
-            "eta_gen",
-            "phi_gen",
-        ]:
-            try:
-                variables.loc[variables[flavor], f"bllj2_{v}"] = llj[v]
-            except Exception:
-                variables.loc[variables[flavor], f"bllj2_{v}"] = -999.0
-
-        lep1 = p4(lepton1, is_mc=is_mc)
-        lep2 = p4(lepton2, is_mc=is_mc)
-
-        ml1 = p4_sum(jet2, lepton1, is_mc=is_mc)
-        ml2 = p4_sum(jet2, lepton2, is_mc=is_mc)
-        try:
-            variables.loc[variables[flavor], "b2l1_mass"] = ml1["mass"]
-        except Exception:
-            variables.loc[variables[flavor], "b2l1_mass"] = 100000
-        try:
-            variables.loc[variables[flavor], "b2l2_mass"] = ml2["mass"]
-        except Exception:
-            variables.loc[variables[flavor], "b2l2_mass"] = 100000
-
-        variables.loc[variables[flavor], "min_b2l_mass"] = variables.loc[variables[flavor], ["b2l1_mass", "b2l2_mass"]].min(axis=1)
-        variables.loc[variables[flavor], "min_bl_mass"] = variables.loc[variables[flavor],
-            ["b1l1_mass", "b1l2_mass", "b2l1_mass", "b2l2_mass"]
-        ].min(axis=1)
-
-        print("blubb3")
-        variables.loc[variables[flavor], ".bjet2_rap"] = rapidity(jet2)
-        # Fill dijet variables
-        jj = p4_sum(jet1, jet2, is_mc=is_mc)
-        for v in [
-            "pt",
-            "eta",
-            "phi",
-            "mass",
-            "pt_gen",
-            "eta_gen",
-            "phi_gen",
-            "mass_gen",
-        ]:
-            try:
-                variables.loc[variables[flavor], f"bjj_{v}"] = jj[v]
-            except Exception:
-                variables.loc[variables[flavor], f"bjj_{v}"] = -999.0
-
-        variables.loc[variables[flavor], "bjj_mass_log"] = np.log(variables.loc[variables[flavor], "bjj_mass"])
-
-        variables.loc[variables[flavor], "bjj_dEta"], variables.loc[variables[flavor], "bjj_dPhi"], _ = delta_r(
-            variables.loc[variables[flavor], "bjet1_eta"],
-            variables.loc[variables[flavor], "bjet2_eta"],
-            variables.loc[variables[flavor], "bjet1_phi"],
-            variables.loc[variables[flavor], "bjet2_phi"],
-        )
-
-        print("blubb4")
-        # Fill dilepton-dibjet system variables
-        jj_columns = [
-            "bjj_pt",
-            "bjj_eta",
-            "bjj_phi",
-            "bjj_mass",
-            "bjj_pt_gen",
-            "bjj_eta_gen",
-            "bjj_phi_gen",
-            "bjj_mass_gen",
-        ]
-
-        dijets = variables.loc[variables[flavor], jj_columns]
-
-        # careful with renaming
-        dijets.columns = [
-            "pt",
-            "eta",
-            "phi",
-            "mass",
-            "mass_gen",
-            "pt_gen",
-            "eta_gen",
-            "phi_gen",
-        ]
-
-        lljj = p4_sum(dileptons, dijets, is_mc=is_mc)
-        for v in [
-            "pt",
-            "eta",
-            "phi",
-            "mass",
-            "mass_gen",
-            "pt_gen",
-            "eta_gen",
-            "phi_gen",
-        ]:
-            try:
-                variables.loc[variables[flavor], f"blljj_{v}"] = lljj[v]
-            except Exception:
-                variables.loc[variables[flavor], f"blljj_{v}"] = -999.0
+            variables.loc[variables[flavor] & jet2Mask, f"blljj_{v}"] = getattr(lljj, v)
 
 
 def jet_id(jets, parameters, year):

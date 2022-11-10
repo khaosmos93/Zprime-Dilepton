@@ -49,7 +49,7 @@ parser.add_argument(
     "-ch",
     "--chunksize",
     dest="chunksize",
-    default=100000,
+    default=200000,
     action="store",
     help="Approximate chunk size",
 )
