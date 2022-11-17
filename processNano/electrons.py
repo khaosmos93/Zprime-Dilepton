@@ -1,108 +1,106 @@
 import numpy as np
 import math
+import awkward as ak
+from coffea.nanoevents.methods import candidate
 
 from processNano.utils import p4_sum, delta_r, cs_variables
 from processNano.corrections.electronMassScale import electronScaleUncert
 
-def find_dielectron(objs, is_mc=True):
 
-    objs["el_idx"] = objs.index.to_numpy()
-    dmass = 20.0
-    for i in range(objs.shape[0] - 1):
-        for j in range(i + 1, objs.shape[0]):
-            px1_ = objs.iloc[i].pt * np.cos(objs.iloc[i].phi)
-            py1_ = objs.iloc[i].pt * np.sin(objs.iloc[i].phi)
-            pz1_ = objs.iloc[i].pt * np.sinh(objs.iloc[i].eta)
-            e1_ = np.sqrt(px1_ ** 2 + py1_ ** 2 + pz1_ ** 2 + objs.iloc[i].mass ** 2)
-            px2_ = objs.iloc[j].pt * np.cos(objs.iloc[j].phi)
-            py2_ = objs.iloc[j].pt * np.sin(objs.iloc[j].phi)
-            pz2_ = objs.iloc[j].pt * np.sinh(objs.iloc[j].eta)
-            e2_ = np.sqrt(px2_ ** 2 + py2_ ** 2 + pz2_ ** 2 + objs.iloc[j].mass ** 2)
-            m2 = (
-                (e1_ + e2_) ** 2
-                - (px1_ + px2_) ** 2
-                - (py1_ + py2_) ** 2
-                - (pz1_ + pz2_) ** 2
-            )
-            mass = math.sqrt(max(0, m2))
-            if abs(mass - 91.1876) < dmass:
-                dmass = abs(mass - 91.1876)
-                idx1 = objs.iloc[i].el_idx
-                idx2 = objs.iloc[j].el_idx
-                dilepton_mass = mass
-                if is_mc:
-                    gpx1_ = objs.iloc[i].pt_gen * np.cos(objs.iloc[i].phi_gen)
-                    gpy1_ = objs.iloc[i].pt_gen * np.sin(objs.iloc[i].phi_gen)
-                    gpz1_ = objs.iloc[i].pt_gen * np.sinh(objs.iloc[i].eta_gen)
-                    ge1_ = np.sqrt(
-                        gpx1_ ** 2 + gpy1_ ** 2 + gpz1_ ** 2 + objs.iloc[i].mass ** 2
-                    )
-                    gpx2_ = objs.iloc[j].pt_gen * np.cos(objs.iloc[j].phi_gen)
-                    gpy2_ = objs.iloc[j].pt_gen * np.sin(objs.iloc[j].phi_gen)
-                    gpz2_ = objs.iloc[j].pt_gen * np.sinh(objs.iloc[j].eta_gen)
-                    ge2_ = np.sqrt(
-                        gpx2_ ** 2 + gpy2_ ** 2 + gpz2_ ** 2 + objs.iloc[j].mass ** 2
-                    )
-                    gm2 = (
-                        (ge1_ + ge2_) ** 2
-                        - (gpx1_ + gpx2_) ** 2
-                        - (gpy1_ + gpy2_) ** 2
-                        - (gpz1_ + gpz2_) ** 2
-                    )
-                    dilepton_mass_gen = math.sqrt(max(0, gm2))
 
-    if dmass == 20:
-        objs = objs.sort_values(by="pt")
+def compute_eleScaleUncertainty(output, e1, e2):
 
-        if is_mc:
-           obj1 = objs.iloc[-1]
-           obj2 = objs.iloc[-2]
-        else:
-           obj1 = objs.iloc[-1]
-           obj2 = objs.iloc[-3]
- 
-        px1_ = obj1.pt * np.cos(obj1.phi)
-        py1_ = obj1.pt * np.sin(obj1.phi)
-        pz1_ = obj1.pt * np.sinh(obj1.eta)
-        e1_ = np.sqrt(px1_ ** 2 + py1_ ** 2 + pz1_ ** 2 + obj1.mass ** 2)
-        px2_ = obj2.pt * np.cos(obj2.phi)
-        py2_ = obj2.pt * np.sin(obj2.phi)
-        pz2_ = obj2.pt * np.sinh(obj2.eta)
-        e2_ = np.sqrt(px2_ ** 2 + py2_ ** 2 + pz2_ ** 2 + obj2.mass ** 2)
-        m2 = (
-            (e1_ + e2_) ** 2
-            - (px1_ + px2_) ** 2
-            - (py1_ + py2_) ** 2
-            - (pz1_ + pz2_) ** 2
-        )
-        mass = math.sqrt(max(0, m2))
-        dilepton_mass = mass
-        idx1 = obj1.el_idx
-        idx2 = obj2.el_idx
-        if is_mc:
-            gpx1_ = obj1.pt_gen * np.cos(obj1.phi_gen)
-            gpy1_ = obj1.pt_gen * np.sin(obj1.phi_gen)
-            gpz1_ = obj1.pt_gen * np.sinh(obj1.eta_gen)
-            ge1_ = np.sqrt(gpx1_ ** 2 + gpy1_ ** 2 + gpz1_ ** 2 + obj1.mass ** 2)
-            gpx2_ = obj2.pt_gen * np.cos(obj2.phi_gen)
-            gpy2_ = obj2.pt_gen * np.sin(obj2.phi_gen)
-            gpz2_ = obj2.pt_gen * np.sinh(obj2.eta_gen)
-            ge2_ = np.sqrt(gpx2_ ** 2 + gpy2_ ** 2 + gpz2_ ** 2 + obj2.mass ** 2)
-            gm2 = (
-                (ge1_ + ge2_) ** 2
-                - (gpx1_ + gpx2_) ** 2
-                - (gpy1_ + gpy2_) ** 2
-                - (gpz1_ + gpz2_) ** 2
-            )
-            dilepton_mass_gen = math.sqrt(max(0, gm2))
-    if is_mc:
-        log1 = objs.loc[objs.el_idx == idx1, "idx"].to_numpy()
-        log2 = objs.loc[objs.el_idx == idx2, "idx"].to_numpy()
-        if log1[0] == -1 or log2[0] == -1:
-            dilepton_mass_gen = -999.0
-        return [idx1, idx2, dilepton_mass,dilepton_mass_gen]
-    else:
-        return [idx1, idx2, dilepton_mass]
+    e1 = ak.flatten(e1)
+    e2 = ak.flatten(e2)
+
+    e1P4sBarrelUp = ak.zip({
+        "pt": e1.pt*1.02,
+        "eta": e1.eta,
+        "phi": e1.phi,
+        "mass": e1.mass,
+        "charge": e1.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    e1P4sEndcapUp = ak.zip({
+        "pt": e1.pt*1.01,
+        "eta": e1.eta,
+        "phi": e1.phi,
+        "mass": e1.mass,
+        "charge": e1.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    e1P4sBarrelDown = ak.zip({
+        "pt": e1.pt*0.98,
+        "eta": e1.eta,
+        "phi": e1.phi,
+        "mass": e1.mass,
+        "charge": e1.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    e1P4sEndcapDown = ak.zip({
+        "pt": e1.pt*0.99,
+        "eta": e1.eta,
+        "phi": e1.phi,
+        "mass": e1.mass,
+        "charge": e1.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    e2P4sBarrelUp = ak.zip({
+        "pt": e2.pt*1.02,
+        "eta": e2.eta,
+        "phi": e2.phi,
+        "mass": e2.mass,
+        "charge": e2.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    e2P4sEndcapUp = ak.zip({
+        "pt": e2.pt*1.01,
+        "eta": e2.eta,
+        "phi": e2.phi,
+        "mass": e2.mass,
+        "charge": e2.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    e2P4sBarrelDown = ak.zip({
+        "pt": e2.pt*0.98,
+        "eta": e2.eta,
+        "phi": e2.phi,
+        "mass": e2.mass,
+        "charge": e2.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+    e2P4sEndcapDown = ak.zip({
+        "pt": e2.pt*0.99,
+        "eta": e2.eta,
+        "phi": e2.phi,
+        "mass": e2.mass,
+        "charge": e2.charge,
+    }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
+
+
+    tempFrame = output.loc[output['isDielectron']]
+
+
+    bbMask = (abs(e1.eta) < 1.4442) & (abs(e2.eta) < 1.442)
+    tempFrame.loc[np.array(bbMask), 'dilepton_mass_scaleUncUp'] = (e1P4sBarrelUp[bbMask] + e2P4sBarrelUp[bbMask]).mass
+    tempFrame.loc[np.array(bbMask), 'dilepton_mass_scaleUncDown'] = (e1P4sBarrelDown[bbMask] + e2P4sBarrelDown[bbMask]).mass
+
+    beMask = (abs(e1.eta) < 1.4442) & (abs(e2.eta) > 1.442)
+    tempFrame.loc[np.array(beMask), 'dilepton_mass_scaleUncUp'] = (e1P4sBarrelUp[beMask] + e2P4sEndcapUp[beMask]).mass
+    tempFrame.loc[np.array(beMask), 'dilepton_mass_scaleUncDown'] = (e1P4sBarrelDown[beMask] + e2P4sEndcapDown[beMask]).mass
+
+    ebMask = (abs(e1.eta) > 1.4442) & (abs(e2.eta) < 1.442)
+    tempFrame.loc[np.array(ebMask), 'dilepton_mass_scaleUncUp'] = (e1P4sEndcapUp[ebMask] + e2P4sBarrelUp[ebMask]).mass
+    tempFrame.loc[np.array(ebMask), 'dilepton_mass_scaleUncDown'] = (e1P4sEndcapDown[ebMask] + e2P4sBarrelDown[ebMask]).mass
+
+    eeMask = (abs(e1.eta) > 1.4442) & (abs(e2.eta) > 1.442)
+    tempFrame.loc[np.array(eeMask), 'dilepton_mass_scaleUncUp'] = (e1P4sEndcapUp[eeMask] + e2P4sEndcapUp[eeMask]).mass
+    tempFrame.loc[np.array(eeMask), 'dilepton_mass_scaleUncDown'] = (e1P4sEndcapDown[eeMask] + e2P4sEndcapDown[eeMask]).mass
+
+
+    output.loc[output['isDielectron']] = tempFrame
+
+    return output
 
 
 def fill_electrons(output, e1, e2, is_mc=True):

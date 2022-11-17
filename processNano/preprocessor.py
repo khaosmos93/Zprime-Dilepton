@@ -99,10 +99,10 @@ class SamplesInfo(object):
             except Exception:
                 print(k, v)
         self.is_mc = True
-        if "mu" in datasets_from:
-            from config.datasets_muon import datasets
-        elif "el" in datasets_from:
-            from config.datasets_electron import datasets
+        #if "mu" in datasets_from:
+        #    from config.datasets_muon import datasets
+        #elif "el" in datasets_from:
+        from config.datasets import datasets
         self.paths = datasets[self.year]
 
         if "mu" in datasets_from:

@@ -84,12 +84,13 @@ def on_partition(args, parameters):
     channels = [c for c in parameters["channels"] if c in df["channel"].unique()]
     if "inclusive" in parameters["channels"]:
         channels.append("inclusive")
+    flavors = parameters["flavor"]
     # < convert desired columns to histograms >
     # not parallelizing for now - nested parallelism leads to a lock
     hist_info_rows = []
     for var_name in parameters["hist_vars"]:
         hist_info_row = make_histograms(
-            df, var_name, year, dataset, regions, channels, npart, parameters
+            df, var_name, year, dataset, regions, channels, flavors, npart, parameters
         )
         if hist_info_row is not None:
             hist_info_rows.append(hist_info_row)
@@ -109,6 +110,7 @@ def on_partition(args, parameters):
             dataset,
             regions,
             channels,
+            flavors,
             npart,
             parameters,
         )

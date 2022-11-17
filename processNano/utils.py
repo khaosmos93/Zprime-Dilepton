@@ -246,7 +246,7 @@ def bbangle(objs1, objs2):
 def unit(vec):
     tot2 = vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]
     tot = np.ones(len(vec[0]))
-    tot[tot2 > 0] = 1 / np.sqrt(tot2[tot2 > 0])
+    tot[np.array(tot2 > 0)] = 1 / np.sqrt(tot2[tot2 > 0])
     return [vec[0] * tot, vec[1] * tot, vec[2] * tot]
 
 
@@ -277,7 +277,7 @@ def boost(vector, boost_vector):
     gamma = 1.0 / np.sqrt(1.0 - b2)
     bp = bx * x + by * y + bz * z
     gamma2 = np.zeros(len(x))
-    gamma2[b2 > 0] = (gamma - 1.0) / b2
+    gamma2[np.array(b2 > 0)] = (gamma - 1.0) / b2
     x = x + gamma2 * bp * bx + gamma * bx * t
     y = y + gamma2 * bp * by + gamma * by * t
     z = z + gamma2 * bp * bz + gamma * bz * t
@@ -385,9 +385,9 @@ def cs_variables(mu1, mu2):
     mu2_kin = boost(mu2_kin, boost_vector)
     pf = boost(pf, boost_vector)
     pw = boost(pw, boost_vector)
-    angle_filter = angle([px, py, pz], [pf[0], pf[1], pf[2]]) < angle(
+    angle_filter = np.array(angle([px, py, pz], [pf[0], pf[1], pf[2]]) < angle(
         [px, py, pz], [pw[0], pw[1], pw[2]]
-    )
+    ))
     for i in range(4):
         pw[i][angle_filter] = -multiplier[angle_filter] * pw[i][angle_filter]
         pf[i][angle_filter] = multiplier[angle_filter] * pf[i][angle_filter]

@@ -49,7 +49,7 @@ parser.add_argument(
     "-ch",
     "--chunksize",
     dest="chunksize",
-    default=200000,
+    default=100000,
     action="store",
     help="Approximate chunk size",
 )
@@ -73,7 +73,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
-node_ip = "128.211.148.60"  # hammer-c000
+node_ip = "128.211.148.61"  # hammer-c000
 # node_ip = "128.211.149.135"
 # node_ip = "128.211.149.140"
 dash_local = f"{node_ip}:34875"
@@ -158,7 +158,7 @@ def submit_job(parameters):
     mkdir(out_dir)
     out_dir += "/" + parameters["label"]
     mkdir(out_dir)
-    out_dir += "/" + "stage1_output" + "_" + parameters["channel"]
+    out_dir += "/" + "stage1_output"
     mkdir(out_dir)
     out_dir += "/" + parameters["year"]
     mkdir(out_dir)
@@ -305,10 +305,14 @@ if __name__ == "__main__":
     }
     if parameters["year"] == "2018":
         smp["data"] = [
-            "data_A",
-            "data_B",
-            "data_C",
-            "data_D",
+            "data_A_Mu",
+            "data_B_Mu",
+            "data_C_Mu",
+            "data_D_Mu",
+            "data_A_El",
+            "data_B_El",
+            "data_C_El",
+            "data_D_El",
             ]
     elif parameters["year"] == "2017":
         smp["data"] = [
@@ -339,7 +343,7 @@ if __name__ == "__main__":
         # create local cluster
         parameters["client"] = Client(
             processes=True,
-            n_workers=1,
+            n_workers=10,
             # dashboard_address=dash_local,
             threads_per_worker=1,
             memory_limit="6GB",
@@ -360,10 +364,11 @@ if __name__ == "__main__":
             # if "dy200to400" not in sample:
             #if sample != "ttbar_lep_M500to800":
             #    continue
-            if "dy1J_M6000toInf" not in sample:
-            #if "data_A" not in sample:
+            #if "WW600to1200" not in sample:
+            #if "dy1J_M6000toInf" not in sample:
+            #if "data" not in sample:
             # if not ("ttbar" in sample or "Wantitop" in sample or "tW" in sample):
-                continue
+            #    continue
 
             #if group != "other_mc":
             #    continue

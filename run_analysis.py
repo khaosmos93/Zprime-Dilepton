@@ -22,7 +22,7 @@ parser.add_argument(
     "-y", "--years", nargs="+", help="Years to process", default=["2018"]
 )
 parser.add_argument(
-    "-f", "--flavor", dest="flavor", help="lepton flavor", default="mu"
+    "-f", "--flavor", nargs="+", help="lepton flavors to process", default=["mu","el"]
 )
 parser.add_argument(
     "-sl",
@@ -39,7 +39,7 @@ use_local_cluster = args.slurm_port is None
 node_ip = "128.211.148.60"
 
 if use_local_cluster:
-    ncpus_local = 40
+    ncpus_local = 20
     slurm_cluster_ip = ""
     dashboard_address = f"{node_ip}:34875"
 else:
@@ -54,7 +54,7 @@ parameters = {
     "years": args.years,
     # "label": "moreKiller",
     # "label": "noGenWeight",
-    "label": "test",
+    "label": "fullScaleTest",
     "flavor": args.flavor,
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["inclusive", "bb", "be"],
@@ -104,10 +104,14 @@ parameters = {
 }
 
 parameters["datasets"] = [
-    "data_A",
-    "data_B",
-    "data_C",
-    "data_D",
+    "data_A_El",
+    "data_B_El",
+    "data_C_El",
+    "data_D_El",
+    "data_A_Mu",
+    "data_B_Mu",
+    "data_C_Mu",
+    "data_D_Mu",
     # "data_E",
     # "data_F",
     # "data_G",
@@ -223,7 +227,7 @@ if __name__ == "__main__":
         for dataset in parameters["datasets"]:
             paths = glob.glob(
                 f"{parameters['global_path']}/"
-                f"{parameters['label']}/stage1_output_{parameters['flavor']}/{year}/"
+                f"{parameters['label']}/stage1_output/{year}/"
                 f"{dataset}/*.parquet"
             )
             all_paths[year][dataset] = paths
@@ -231,6 +235,7 @@ if __name__ == "__main__":
     # run postprocessing
     for year in parameters["years"]:
         print(f"Processing {year}")
+        print (all_paths[year])
         for dataset, path in tqdm.tqdm(all_paths[year].items()):
             if len(path) == 0:
                 continue

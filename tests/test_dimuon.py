@@ -30,15 +30,17 @@ if __name__ == "__main__":
     )
     print("Client created")
 
-    file_name = "nano_2.root"
+    file_name = "nano_1.root"
+    #file_name = "nano_2.root"
     file_path = f"{os.getcwd()}/tests/samples/{file_name}"
     #file_path = "/mnt/hadoop//store/user/minxi/bbll_4FermionCI_M-400To1000_Lambda-4TeV_posLR/crab_bbll_4FermionCI_M-400To1000_Lambda-4TeV_posLR/220319_020708/0000/CI_NanoAODv9_274.root"
     dataset = {"test": file_path}
+    dataset = {"data": file_path}
 
     samp_info = SamplesInfo(xrootd=False, datasets_from="mu", year="2018")
     samp_info.paths = dataset
-    samp_info.load("test", use_dask=False)
-    samp_info.lumi_weights["test"] = 1.0
+    samp_info.load("data", use_dask=False)
+    samp_info.lumi_weights["data"] = 1.0
     executor = dask_executor
     executor_args = {
         "client": client,

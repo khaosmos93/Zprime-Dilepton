@@ -115,7 +115,7 @@ def save_stage2_output_hists(hist, var_name, dataset, year, parameters, npart=No
 
     out_dir = global_path + "/" + label
     mkdir(out_dir)
-    out_dir += "/" + "stage2_histograms_%s"%parameters["flavor"]
+    out_dir += "/" + "stage2_histograms"
     mkdir(out_dir)
     out_dir += "/" + var_name
     mkdir(out_dir)
@@ -141,7 +141,7 @@ def delete_existing_stage2_hists(datasets, years, parameters):
     for year in years:
         for var_name in var_names:
             for dataset in datasets:
-                path = f"{global_path}/{label}/stage2_histograms_{parameters['flavor']}/{var_name}/{year}/"
+                path = f"{global_path}/{label}/stage2_histograms/{var_name}/{year}/"
                 try:
                     paths = glob.glob(f"{path}/{dataset}_*.pickle") + glob.glob(
                         f"{path}/{dataset}.pickle"
@@ -162,7 +162,7 @@ def load_stage2_output_hists(argset, parameters):
     if (global_path is None) or (label is None):
         return
 
-    path = f"{global_path}/{label}/stage2_histograms_{parameters['flavor']}/{var_name}/{year}/"
+    path = f"{global_path}/{label}/stage2_histograms/{var_name}/{year}/"
     paths = glob.glob(f"{path}/{dataset}_*.pickle") + glob.glob(f"{path}.pickle")
     hist_df = pd.DataFrame()
     for path in paths:

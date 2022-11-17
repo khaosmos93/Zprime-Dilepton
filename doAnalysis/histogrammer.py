@@ -21,7 +21,7 @@ def calc_binwidth_weight(data, binning):
     return array(weights)
 
 
-def make_histograms(df, var_name, year, dataset, regions, channels, npart, parameters):
+def make_histograms(df, var_name, year, dataset, regions, channels, flavor, npart, parameters):
     # try to get binning from config
     if var_name in parameters["variables_lookup"].keys():
         var = parameters["variables_lookup"][var_name]
@@ -39,10 +39,11 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
                 variations.append(variation)
 
     # prepare multidimensional histogram
-    # add axes for (1) mass region, (2) channel, (3) value or sumw2
+    # add axes for (1) mass region, (2) channel, (3) lepton flavor, (4) value or sumw2
     hist = (
         Hist.new.StrCat(regions, name="region")
         .StrCat(channels, name="channel")
+        .StrCat(flavors, name="flavor")
         .StrCat(["value", "sumw2"], name="val_sumw2")
     )
 
@@ -70,6 +71,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
         "w": wgt_variations,
         "v": syst_variations,
         "channel": channels,
+        "flavor": flavors,
     }
     loop_args = [
         dict(zip(loop_args.keys(), values))
@@ -80,6 +82,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
     for loop_arg in loop_args:
         region = loop_arg["region"]
         channel = loop_arg["channel"]
+        flavor  = loop_arg["flavor"]
         w = loop_arg["w"]
         v = loop_arg["v"]
         variation = get_variation(w, v)
@@ -96,6 +99,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
         slicer = (
             (df.dataset == dataset)
             & ((df.r == region) | (region == "inclusive"))
+            & ((flavor == "mu" & df.isDimuon) | (flavor == "el" & df.isDielectron))
             & (df.year == year)
             & (df.dilepton_mass > 200)
             & ((df["channel"] == channel) | (channel == "inclusive"))
@@ -107,7 +111,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
         if var.norm_to_bin_width:
             weight = weight * calc_binwidth_weight(data.to_numpy(), var.binning)
 
-        to_fill = {var.name: data, "region": region, "channel": channel}
+        to_fill = {var.name: data, "region": region, "channel": channel, "flavor": flavor}
 
         to_fill_value = to_fill.copy()
         to_fill_value["val_sumw2"] = "value"
@@ -126,6 +130,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, npart, param
             "variation": variation,
             "region": region,
             "channel": channel,
+            "flavor": flavor,
             "yield": weight.sum(),
         }
         if weight.sum() == 0:
@@ -176,10 +181,11 @@ def make_histograms2D(
     #            variations.append(variation)
 
     # prepare multidimensional histogram
-    # add axes for (1) mass region, (2) channel, (3) value or sumw2
+    # add axes for (1) mass region, (2) channel, (3) flavor, (4) value or sumw2
     hist = (
         Hist.new.StrCat(regions, name="region")
         .StrCat(channels, name="channel")
+        .StrCat(flavors,  name="flavor")
         .StrCat(["value1", "value2", "sumw2"], name="val_sumw2")
     )
 
@@ -208,6 +214,7 @@ def make_histograms2D(
     loop_args = {
         "region": regions,
         "channel": channels,
+        "flavor": flavors,
     }
     loop_args = [
         dict(zip(loop_args.keys(), values))
@@ -218,6 +225,7 @@ def make_histograms2D(
     for loop_arg in loop_args:
         region = loop_arg["region"]
         channel = loop_arg["channel"]
+        flavor = loop_arg["flavor"]
         w = "wgt_nominal"
         #        w = loop_arg["w"]
         #        v = loop_arg["v"]
@@ -235,6 +243,7 @@ def make_histograms2D(
             (df.dataset == dataset)
             & ((df.r == region) | (region == "inclusive"))
             & (df.year == year)
+            & ((flavor == "mu" & df.isDimuon) | (flavor == "el" & df.isDielectron))
             & (df.dilepton_mass > 200)
             & ((df["channel"] == channel) | (channel == "inclusive"))
             & (~((df.dataset == "ttbar_lep_inclusive") & (df.dilepton_mass_gen > 500)))
@@ -250,6 +259,7 @@ def make_histograms2D(
             var2.name: data2,
             "region": region,
             "channel": channel,
+            "flavor": flavor,
         }
 
         to_fill_value = to_fill.copy()
@@ -268,6 +278,7 @@ def make_histograms2D(
             "variation": "nominal",
             "region": region,
             "channel": channel,
+            "flavor": flavor,
             "yield": weight.sum(),
         }
         if weight.sum() == 0:
