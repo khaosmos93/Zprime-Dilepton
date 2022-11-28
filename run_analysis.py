@@ -102,7 +102,6 @@ parameters = {
     "bdt_models": {},
     "mva_bins_original": mva_bins,
 }
-
 parameters["datasets"] = [
     "data_A_El",
     "data_B_El",
@@ -187,6 +186,20 @@ parameters["datasets"] = [
     "bbll_8TeV_M400_posLL",
     "bbll_8TeV_M400_posLR",
 ]
+
+#parameters["datasets"] = [
+
+ #   "dy0J_M400to800",
+    #"dy0J_M1400to2300",
+#    "ttbar_lep_inclusive",
+#    "ttbar_lep_M500to800",
+#    "ttbar_lep_M800to1200",
+#    "ttbar_lep_M1200to1800",
+#    "ttbar_lep_M1800toInf",
+#    "tW",
+#    "Wantitop",
+
+#]
 # using one small dataset for debugging
 # parameters["datasets"] = ["vbf_powheg_dipole"]
 
@@ -235,7 +248,6 @@ if __name__ == "__main__":
     # run postprocessing
     for year in parameters["years"]:
         print(f"Processing {year}")
-        print (all_paths[year])
         for dataset, path in tqdm.tqdm(all_paths[year].items()):
             if len(path) == 0:
                 continue

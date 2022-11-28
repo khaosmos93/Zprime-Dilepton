@@ -16,7 +16,7 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "-f", "--flavor", dest="flavor", help="lepton flavor", default="mu"
+    "-f", "--flavor", nargs="+", help="lepton flavor", default=["mu","el"]
 )
 
 
@@ -48,7 +48,7 @@ parameters = {
     "slurm_cluster_ip": slurm_cluster_ip,
     "years": args.years,
     "global_path": "/depot/cms/users/schul105/dilepton/Zprime-Dilepton/output/",
-    "label": "combinedTest",
+    "label": "fullScaleTest",
     "flavor": args.flavor,
     "channels": ["inclusive", "0b", "1b", "2b"],
     "regions": ["inclusive", "bb", "be"],
@@ -69,7 +69,7 @@ parameters = {
     "variables_lookup": variables_lookup,
     "save_plots": True,
     "plot_ratio": True,
-    "plots_path": "./plots/test_%s/"%args.flavor,
+    "plots_path": "./plots/",
     "dnn_models": {},
     "bdt_models": {},
     #
@@ -87,10 +87,14 @@ parameters = {
 
 
 parameters["grouping"] = {
-    "data_A": "Data",
-    "data_B": "Data",
-    "data_C": "Data",
-    "data_D": "Data",
+    "data_A_Mu": "Data",
+    "data_B_Mu": "Data",
+    "data_C_Mu": "Data",
+    "data_D_Mu": "Data",
+    "data_A_El": "Data",
+    "data_B_El": "Data",
+    "data_C_El": "Data",
+    "data_D_El": "Data",
     # "data_E": "Data",
     # "data_F": "Data",
     # "data_G": "Data",

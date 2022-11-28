@@ -21,7 +21,7 @@ def calc_binwidth_weight(data, binning):
     return array(weights)
 
 
-def make_histograms(df, var_name, year, dataset, regions, channels, flavor, npart, parameters):
+def make_histograms(df, var_name, year, dataset, regions, channels, flavors, npart, parameters):
     # try to get binning from config
     if var_name in parameters["variables_lookup"].keys():
         var = parameters["variables_lookup"][var_name]
@@ -88,23 +88,28 @@ def make_histograms(df, var_name, year, dataset, regions, channels, flavor, npar
         variation = get_variation(w, v)
         if not variation:
             continue
-
+ 
         var_name = f"{var.name}_{v}"
         if var_name not in df.columns:
             if var.name in df.columns:
                 var_name = var.name
             else:
                 continue
-        #if parameters["flavor"] == "mu":
+        if flavor == "mu":
+            leptonSlice = (df.isDimuon == True)
+        else: 
+            leptonSlice = (df.isDielectron == True)
+        #print (leptonSlice)
+        #print (~((df.dilepton_mass_gen > 200) & (df.dataset == "ttbar_lep_inclusive")))
         slicer = (
             (df.dataset == dataset)
             & ((df.r == region) | (region == "inclusive"))
-            & ((flavor == "mu" & df.isDimuon) | (flavor == "el" & df.isDielectron))
+            & (leptonSlice)
             & (df.year == year)
             & (df.dilepton_mass > 200)
             & ((df["channel"] == channel) | (channel == "inclusive"))
             & (~((df.dataset == "ttbar_lep_inclusive") & (df.dilepton_mass_gen > 500)))
-            & (~((df.dataset == "WWinclusive") & (df.dilepton_mass_gen > 200)))
+            #& (~((df.dataset == "WWinclusive") & (df.dilepton_mass_gen > 200)))
         )
         data = df.loc[slicer, var_name]
         weight = df.loc[slicer, w]
@@ -156,7 +161,7 @@ def make_histograms(df, var_name, year, dataset, regions, channels, flavor, npar
 
 
 def make_histograms2D(
-    df, var_name1, var_name2, year, dataset, regions, channels, npart, parameters
+    df, var_name1, var_name2, year, dataset, regions, channels, flavors, npart, parameters
 ):
     # try to get binning from config
     if var_name1 in parameters["variables_lookup"].keys():
@@ -243,7 +248,7 @@ def make_histograms2D(
             (df.dataset == dataset)
             & ((df.r == region) | (region == "inclusive"))
             & (df.year == year)
-            & ((flavor == "mu" & df.isDimuon) | (flavor == "el" & df.isDielectron))
+            #& ((flavor == "mu" & df.isDimuon) | (flavor == "el" & df.isDielectron))
             & (df.dilepton_mass > 200)
             & ((df["channel"] == channel) | (channel == "inclusive"))
             & (~((df.dataset == "ttbar_lep_inclusive") & (df.dilepton_mass_gen > 500)))

@@ -97,7 +97,7 @@ def plotter(client, parameters, hist_df=None, timer=None):
 
     arg_plot = {
         "year": parameters["years"],
-        "flavor": [parameters["flavor"]],
+        "flavor": parameters["flavor"],
         "region": parameters["regions"],
         "channel": parameters["channels"],
         "var_name": [
@@ -126,7 +126,7 @@ def plotter2D(client, parameters, hist_df=None, timer=None):
             return []
     arg_plot = {
         "year": parameters["years"],
-        "flavor": [parameters["flavor"]],
+        "flavor": parameters["flavor"],
         "region": parameters["regions"],
         "channel": parameters["channels"],
         "var_name1": [
@@ -169,7 +169,7 @@ def plot(args, parameters={}):
     # temporary
     # variation = "nominal"
     variation = parameters["syst_variations"]
-
+    print ("in here")
     # slicer = {"region": region, "channel": channel, "variation": variation}
 
     fig = plt.figure()
@@ -369,10 +369,10 @@ def plot(args, parameters={}):
     if save_plots:
         path = parameters["plots_path"]
         mkdir(path)
-        out_name = f"{path}/{var.name}_{region}_{channel}_{year}.png"
+        out_name = f"{path}/{var.name}_{region}_{channel}_{year}_{flavor}.png"
         fig.savefig(out_name)
         print(f"Saved: {out_name}")
-        out_name = f"{path}/{var.name}_{region}_{channel}_{year}.pdf"
+        out_name = f"{path}/{var.name}_{region}_{channel}_{year}_{flavor}.pdf"
         fig.savefig(out_name)
         print(f"Saved: {out_name}")
 
@@ -455,10 +455,10 @@ def plot2D(args, parameters={}):
             if save_plots:
                 path = parameters["plots_path"]
                 mkdir(path)
-                out_name = f"{path}/{var1.name}_{var2.name}_{label}_{region}_{channel}_{year}.png"
+                out_name = f"{path}/{var1.name}_{var2.name}_{label}_{region}_{channel}_{year}_{flavor}.png"
                 fig.savefig(out_name)
                 print(f"Saved: {out_name}")
-                out_name = f"{path}/{var1.name}_{var2.name}_{label}_{region}_{channel}_{year}.pdf"
+                out_name = f"{path}/{var1.name}_{var2.name}_{label}_{region}_{channel}_{year}_{flavor}.pdf"
                 fig.savefig(out_name)
                 print(f"Saved: {out_name}")
 
