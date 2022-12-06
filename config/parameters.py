@@ -3,7 +3,16 @@ def for_all_years(value):
     return out
 
 parameters = {}
-lumis = {"2016preVFP": [19.12*1000,19.29*1000], "2016postVFP": [16.81*1000,17.01*1000], "2017": [41.48*1000,42.02*1000], "2018": [59.83*1000,61.31*1000]}
+lumis = {
+    "2016preVFP": [19.12*1000, 19.12*1000],
+    "2016postVFP": [16.81*1000, 16.81*1000],
+    "2017": [41.48*1000, 41.48*1000],
+    "2018": [59.83*1000, 59.83*1000]
+    # "2016preVFP": [19.12*1000,19.29*1000],
+    # "2016postVFP": [16.81*1000,17.01*1000],
+    # "2017": [41.48*1000,42.02*1000],
+    # "2018": [59.83*1000,61.31*1000]
+}
 parameters["lumimask_Pre-UL_mu"] = {
     # "2016": "data/lumimasks/Cert_271036-284044_13TeV_ReReco_07Aug2017_Collisions16_JSON.txt",
     # "2017": "data/lumimasks/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_v1.txt",
@@ -21,13 +30,20 @@ parameters["lumimask_UL_el"] = {
     "2016preVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt",
     "2016postVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt",
     "2017": "data/lumimasks/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt",
-    "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt",
+    "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON__Cert_Collisions2022_355100_362439_Golden.json",  # 2018 + Run 3
+    # "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt",
 }
 parameters["lumimask_UL_mu"] = {
-    "2018preVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON_MuonPhys.txt",
-    "2016postVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON_MuonPhys.txt",
-    "2017": "data/lumimasks/Cert_294927-306462_13TeV_UL2017_Collisions17_MuonJSON.txt",
-    "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON_MuonPhys.txt",
+    "2016preVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt",
+    "2016postVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt",
+    "2017": "data/lumimasks/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt",
+    "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON__Cert_Collisions2022_355100_362439_Golden.json",  # 2018 + Run 3
+    # "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt",
+
+    # "2018preVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON_MuonPhys.txt",
+    # "2016postVFP": "data/lumimasks/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON_MuonPhys.txt",
+    # "2017": "data/lumimasks/Cert_294927-306462_13TeV_UL2017_Collisions17_MuonJSON.txt",
+    # "2018": "data/lumimasks/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON_MuonPhys.txt",
 }
 
 parameters["mu_hlt"] = {
@@ -186,7 +202,7 @@ parameters.update(
     {
         "muon_pt_cut": for_all_years(53.0),
         "muon_eta_cut": for_all_years(2.4),
-        "muon_iso_cut": for_all_years(0.3),  # medium iso
+        "muon_iso_cut": for_all_years(0.1),
         "muon_id": for_all_years("highPtId"),
         "muon_dxy": for_all_years(0.2),
         "muon_ptErr/pt": for_all_years(0.3),

@@ -68,22 +68,50 @@ def on_partition(args, parameters):
     # preprocess
     df.fillna(-999.0, inplace=True)
     df = df[(df.dataset == dataset) & (df.year == year)]
-    if "dy_m105_160_amc" in dataset:
-        df = df[df.gjj_mass <= 350]
-    if "dy_m105_160_vbf_amc" in dataset:
-        df = df[df.gjj_mass > 350]
+    
+    # HERE temporary, for debug...
+    if "data_" in dataset:
+        if "data_2022" in dataset:
+            lumi_2018 = 59.83*1000
+            lumi_run3 = 31331.664116641
+            df.loc[:, "wgt_gen_lumi"] = lumi_2018/lumi_run3
+            df.loc[:, "wgt_gen_lumi_pu"] = lumi_2018/lumi_run3
+            df.loc[:, "wgt_gen_lumi_pu_l1pf"] = lumi_2018/lumi_run3
+            df.loc[:, "wgt_gen_lumi_pu_l1pf_btag"] = lumi_2018/lumi_run3
+        else:
+            df.loc[:, "wgt_gen_lumi"] = 1.
+            df.loc[:, "wgt_gen_lumi_pu"] = 1.
+            df.loc[:, "wgt_gen_lumi_pu_l1pf"] = 1.
+            df.loc[:, "wgt_gen_lumi_pu_l1pf_btag"] = 1.
+    else:
+        df.loc[:, "wgt_gen_lumi"] = df.wgt_raw_gen * df.wgt_raw_lumi
+        df.loc[:, "wgt_gen_lumi_pu"] = df.wgt_raw_gen * df.wgt_raw_lumi * df.wgt_raw_pu
+        df.loc[:, "wgt_gen_lumi_pu_l1pf"] = df.wgt_raw_gen * df.wgt_raw_lumi * df.wgt_raw_pu * df.wgt_raw_l1pf
+        df.loc[:, "wgt_gen_lumi_pu_l1pf_btag"] = df.wgt_raw_gen * df.wgt_raw_lumi * df.wgt_raw_pu * df.wgt_raw_l1pf * df.wgt_raw_btag
+
+    # HERE temporary bug fix
+    slice_b1l_only = ((df.min_b1l_mass > 0.) & (df.min_b2l_mass < 0.))
+    df.loc[slice_b1l_only, "min_bl_mass"] = df[slice_b1l_only].min_b1l_mass
+    slice_b2l_only = ((df.min_b2l_mass > 0.) & (df.min_b2l_mass < 0.))
+    df.loc[slice_b2l_only, "min_bl_mass"] = df[slice_b2l_only].min_b2l_mass
+    slice_b1l_b2l = ((df.min_b1l_mass > 0.) & (df.min_b2l_mass > 0.))
+    df.loc[slice_b1l_b2l, "min_bl_mass"] = df.loc[slice_b1l_b2l, ["min_b1l_mass", "min_b2l_mass"]].min(axis = 1)
 
     # < evaluate here MVA scores before categorization, if needed >
     # ...
 
     # < categorization into channels (ggH, VBF, etc.) >
     split_into_channels(df, v="nominal")
-    regions = [r for r in parameters["regions"] if r in df.r.unique()]
-    if "inclusive" in parameters["regions"]:
-        regions.append("inclusive")
-    channels = [c for c in parameters["channels"] if c in df["channel"].unique()]
-    if "inclusive" in parameters["channels"]:
-        channels.append("inclusive")
+    # regions = [r for r in parameters["regions"] if r in df.r.unique()]
+    # if "inclusive" in parameters["regions"]:
+    #     regions.append("inclusive")
+    regions = [r for r in parameters["regions"]]
+
+    # channels = [c for c in parameters["channels"] if c in df["channel"].unique()]
+    # if "inclusive" in parameters["channels"]:
+    #     channels.append("inclusive")
+    channels = [c for c in parameters["channels"]]
+
     flavors = parameters["flavor"]
     # < convert desired columns to histograms >
     # not parallelizing for now - nested parallelism leads to a lock

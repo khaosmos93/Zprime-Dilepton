@@ -9,12 +9,14 @@ from coffea.nanoevents.methods import candidate
 from coffea.btag_tools import BTagScaleFactor
 from config.parameters import parameters
 
+# HERE
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 
 def btagSF_new(jets, year, correction="shape", is_UL=True):
 
     if is_UL:
         if correction == "wp":
-            jets["btag_sf_wp"] = 1.0
             systs = [
                 "central",
                 "up",
@@ -64,12 +66,14 @@ def btagSF_new(jets, year, correction="shape", is_UL=True):
 
         cset = BTagScaleFactor(parameters["btag_sf_pre_UL"][year], "medium")
 
-    mask = (jets.pt > 20.0) & (abs(jets.eta) < 2.4) & (jets.jetId >= 2)
+    mask = (jets.pt > 30.0) & (abs(jets.eta) < 2.4) & (jets.jetId >= 2)
+
+    btag_wp_sf = {}
+    btag_wp_wgt = {}
 
     for syst in systs:
         if correction == "shape":
-
-            jets["btag_sf_shape_{syst}"] = 1.0
+            jets[f"btag_sf_shape_{syst}"] = 1.0
             j, nj = ak.flatten(jets[mask]), ak.num(jets[mask])
 
             if is_UL:
@@ -80,23 +84,32 @@ def btagSF_new(jets, year, correction="shape", is_UL=True):
                 jets[mask]["btag_sf_shape"] = sf
 
             else:
-                jets[mask]["btag_sf_shape_{syst}"] = sf
-
+                jets[mask][f"btag_sf_shape_{syst}"] = sf
         elif correction == "wp":
-
-            jets["btag_sf_wp_%s"%syst] = 1.0
+            btag_wp_sf[syst] = {}
+            btag_wp_wgt[syst] = {}
+            if syst == "central":
+                jets["btag_sf_wp"] = 1.0
+            else:
+                jets[f"btag_sf_wp_{syst}"] = 1.0
             path_eff = parameters["btag_sf_eff"][year]
             wp = parameters["UL_btag_medium"][year]
             with open(path_eff, "rb") as handle:
                 eff = pickle.load(handle)
            
             efflookup = dense_lookup(eff.values(), [ax.edges for ax in eff.axes])
+            btag_eff_flavor_bin = {
+                0: 0,
+                4: 1,
+                5: 2
+            }
             keys = [0,4,5]
-            for key in keys:
-                if key == 0: 
-                    mask_flavor = jets["hadronFlavour"] < 4
-                else:
-                    mask_flavor = jets["hadronFlavour"] > 4
+            for ikey, key in enumerate(keys):
+                # if key == 0: 
+                #     mask_flavor = jets["hadronFlavour"] < 4
+                # else:
+                #     mask_flavor = jets["hadronFlavour"] > 4
+                mask_flavor = (jets["hadronFlavour"] == key)
 
                 j = ak.flatten(jets[mask & mask_flavor])
                 nj = ak.num(jets[mask & mask_flavor])
@@ -114,15 +127,13 @@ def btagSF_new(jets, year, correction="shape", is_UL=True):
                         fac = cset[corr].evaluate(syst, "M", flavor, eta, pt)
                     except Exception:
                         fac = cset[corr].evaluate("central", "M", flavor, eta, pt)
-
                 else:
                     try:
-
                         fac = cset.eval(syst, flavor, eta, pt, wp)
                     except Exception:
                         fac = cset.eval("central", flavor, eta, pt, wp)
 
-                prob = efflookup(pt, eta, key)
+                prob = efflookup(pt, eta, btag_eff_flavor_bin[key])
                 prob_nosf = np.copy(prob)
                 prob_sf = np.copy(prob) * fac
                 prob_sf[mva < wp] = 1.0 - prob_sf[mva < wp]
@@ -130,17 +141,22 @@ def btagSF_new(jets, year, correction="shape", is_UL=True):
                 sf = prob_sf / prob_nosf
                 sf = ak.unflatten(sf,nj)
 
-                if syst == "central":
-                    jets[mask & mask_flavor]["btag_sf_wp"] = sf
-                else:
-                    jets[mask & mask_flavor][f"btag_sf_wp_{syst}"] = sf
+                btag_wp_sf[syst][key] = np.copy(sf)
+                btag_wp_wgt[syst][key] = ak.prod(sf, axis=1)
 
+                if ikey == 0:
+                    btag_wp_wgt[syst]["wgt"] = ak.prod(sf, axis=1)
+                else:
+                    btag_wp_wgt[syst]["wgt"] = btag_wp_wgt[syst]["wgt"]*ak.prod(sf, axis=1)
+
+                
 #            if syst == "central":
 #                jets["btag_sf_wp"].fill_none(1.0)
 #            else:
 #                jets[f"btag_sf_wp_{syst}"].fill_none(1.0)
 
-    return jets
+    return jets, btag_wp_wgt
+
 
 def btagSF(df, year, correction="shape", is_UL=True):
 
@@ -196,7 +212,7 @@ def btagSF(df, year, correction="shape", is_UL=True):
 
     df["pre_selection"] = False
     df.loc[
-        (df.pt > 20.0) & (abs(df.eta) < 2.4) & (df.jetId >= 2), "pre_selection"
+        (df.pt > 30.0) & (abs(df.eta) < 2.4) & (df.jetId >= 2), "pre_selection"
     ] = True
     mask = df["pre_selection"]
     for syst in systs:
@@ -271,7 +287,8 @@ def prepare_jets(df, is_mc):
     # Initialize missing fields (needed for JEC)
     df["Jet", "pt_raw"] = (1 - df.Jet.rawFactor) * df.Jet.pt
     df["Jet", "mass_raw"] = (1 - df.Jet.rawFactor) * df.Jet.mass
-    df["Jet", "rho"] = ak.broadcast_arrays(df.fixedGridRhoFastjetAll, df.Jet.pt)[0]
+    # HERE tmp, incompetible with Run 3 nano (v10)
+    # df["Jet", "rho"] = ak.broadcast_arrays(df.fixedGridRhoFastjetAll, df.Jet.pt)[0]
 
     if is_mc:
         df["Jet", "pt_gen"] = ak.values_astype(
@@ -289,6 +306,7 @@ def fill_jets(output, variables, jets, njet, muons, electrons, is_mc=True):
         "jet1_jetId",
         "jet1_puId",
         "jet1_btagDeepB",
+        "jet1_btagDeepFlavB",
         "jet2_pt",
         "jet2_eta",
         "jet2_rap",
@@ -297,6 +315,7 @@ def fill_jets(output, variables, jets, njet, muons, electrons, is_mc=True):
         "jet2_jetId",
         "jet2_puId",
         "jet2_btagDeepB",
+        "jet2_btagDeepFlavB",
         "jet1_sf",
         "jet2_sf",
         "jj_mass",
@@ -343,10 +362,10 @@ def fill_jets(output, variables, jets, njet, muons, electrons, is_mc=True):
         "eta",
         "phi",
         "mass",
-#        "pt_gen",
-#        "eta_gen",
-#        "phi_gen",
-        "qgl",
+        # "pt_gen",
+        # "eta_gen",
+        # "phi_gen",
+        # "qgl",
         "btagDeepB",
         "btagDeepFlavB",
     ]:
@@ -571,6 +590,7 @@ def initialize_bjet_var(variables):
         "bjet1_jetId",
         "bjet1_puId",
         "bjet1_btagDeepB",
+        "bjet1_btagDeepFlavB",
         "bjet2_pt",
         "bjet2_eta",
         "bjet2_rap",
@@ -579,6 +599,7 @@ def initialize_bjet_var(variables):
         "bjet2_jetId",
         "bjet2_puId",
         "bjet2_btagDeepB",
+        "bjet2_btagDeepFlavB",
         "bjet1_sf",
         "bjet2_sf",
         "bjj_mass",
@@ -623,6 +644,7 @@ def initialize_bjet_var(variables):
 
     return variables
 
+
 def fill_bjets(output, variables, jets, leptons, flavor, is_mc=True):
 
 
@@ -638,11 +660,12 @@ def fill_bjets(output, variables, jets, leptons, flavor, is_mc=True):
         "pt",
         "eta",
         "phi",
-#        "pt_gen",
-#        "eta_gen",
-#        "phi_gen",
-        "qgl",
+        # "pt_gen",
+        # "eta_gen",
+        # "phi_gen",
+        # "qgl",
         "btagDeepB",
+        "btagDeepFlavB",
     ]:
         variables.loc[np.array(jet1Mask), f"bjet1_{v}"] = getattr(jet1[jet1Mask], v)
         variables.loc[np.array(jet2Mask), f"bjet2_{v}"] = getattr(jet2[jet2Mask], v)
@@ -809,7 +832,7 @@ def fill_bjets(output, variables, jets, leptons, flavor, is_mc=True):
             "charge": lJet2Filtered.charge,
         }, with_name="PtEtaPhiMCandidate", behavior=candidate.behavior)    
 
-        llj2 = leptons[0][lJet2Mask] + lJet1P4s + lJet2P4s
+        llj2 = leptons[0][lJet2Mask] + leptons[1][lJet2Mask] + lJet2P4s
         lljj = leptons[0][lJet2Mask] + leptons[1][lJet2Mask] + lJet1P4s + lJet2P4s
 
         if len(llj2) > 0:

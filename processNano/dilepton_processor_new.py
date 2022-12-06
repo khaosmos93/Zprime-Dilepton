@@ -1,6 +1,9 @@
 import sys
-
 sys.path.append("copperhead/")
+
+from warnings import simplefilter, filterwarnings
+filterwarnings("ignore", category=DeprecationWarning)
+filterwarnings("ignore", category=RuntimeWarning)
 
 import awkward
 import awkward as ak
@@ -28,7 +31,7 @@ from processNano.corrections.nnpdfWeight import NNPDFWeight
 from copperhead.stage1.corrections.jec import jec_factories, apply_jec
 from copperhead.config.jec_parameters import jec_parameters
 
-from processNano.jets import prepare_jets, fill_jets, fill_bjets, btagSF, initialize_bjet_var, btagSF_new
+from processNano.jets import prepare_jets, fill_jets, fill_bjets, initialize_bjet_var, btagSF_new  # btagSF
 
 import copy
 
@@ -38,6 +41,8 @@ from processNano.electrons import compute_eleScaleUncertainty
 from processNano.utils import bbangle
 
 from config.parameters import parameters, muon_branches, ele_branches, jet_branches
+
+simplefilter(action="ignore", category=pd.errors.PerformanceWarning)
 
 @numba.njit
 def calc_mass(obj1, obj2):
@@ -113,8 +118,8 @@ class DileptonProcessor(processor.ProcessorABC):
 
         self._accumulator = processor.defaultdict_accumulator(int)
 
-        self.applykFac = True
-        self.applyNNPDFWeight = True
+        self.applykFac = False
+        self.applyNNPDFWeight = False
         self.do_pu = True
         self.auto_pu = False
         self.do_l1pw = True  # L1 prefiring weights
@@ -171,10 +176,25 @@ class DileptonProcessor(processor.ProcessorABC):
 
         output = initialize_leptons(self, output)
 
-        hlt_mu = ak.to_pandas(df.HLT[self.parameters["mu_hlt"]])
-        trigFilterMu = hlt_mu[self.parameters["mu_hlt"]].sum(axis=1) > 0
-        hlt_el= ak.to_pandas(df.HLT[self.parameters["el_hlt"]])
-        trigFilterEl = hlt_el[self.parameters["el_hlt"]].sum(axis=1) > 0
+        # HERE tmp
+        if "data_2022" in dataset:
+            if "Mu50" not in ak.fields(df.HLT):
+                hlt_mu = ak.to_pandas(df.HLT)
+                trigFilterMu = hlt_mu.sum(axis=1) < -1  # set to false
+            else:
+                hlt_mu = ak.to_pandas(df.HLT[["Mu50", "HighPtTkMu100", "CascadeMu100"]])
+                trigFilterMu = hlt_mu[["Mu50", "HighPtTkMu100", "CascadeMu100"]].sum(axis=1) > 0
+            if "DoubleEle25_CaloIdL_MW" not in ak.fields(df.HLT):
+                hlt_el = ak.to_pandas(df.HLT)
+                trigFilterEl = hlt_el.sum(axis=1) < -1  # set to false
+            else:
+                hlt_el= ak.to_pandas(df.HLT[["DoubleEle25_CaloIdL_MW"]])
+                trigFilterEl = hlt_el[["DoubleEle25_CaloIdL_MW"]].sum(axis=1) > 0
+        else:
+            hlt_mu = ak.to_pandas(df.HLT[self.parameters["mu_hlt"]])
+            trigFilterMu = hlt_mu[self.parameters["mu_hlt"]].sum(axis=1) > 0
+            hlt_el= ak.to_pandas(df.HLT[self.parameters["el_hlt"]])
+            trigFilterEl = hlt_el[self.parameters["el_hlt"]].sum(axis=1) > 0
         output["isDielectron"] = trigFilterEl
         output["isDimuon"] = trigFilterMu
 
@@ -272,8 +292,27 @@ class DileptonProcessor(processor.ProcessorABC):
       
             tempMask = output["isDimuon"] & output["isDielectron"]
 
-            output.loc[tempMask, "isDimuon"] = ( (abs(dimuonP4Overlap.mass - 91.1876) < 20) & (abs(dimuonP4Overlap.mass - 91.1876) < abs(dielectronP4Overlap.mass - 91.1876)) | ( (abs(dimuonP4Overlap.mass - 91.1876) > 20) & (dimuonP4Overlap.mass > dielectronP4Overlap.mass ) ) )
-            output.loc[tempMask, "isDielectron"] = ( (abs(dielectronP4Overlap.mass - 91.1876) < 20) & (abs(dielectronP4Overlap.mass - 91.1876) < abs(dimuonP4Overlap.mass - 91.1876)) | ((abs(dielectronP4Overlap.mass - 91.1876) < 20) & (dielectronP4Overlap.mass > dimuonP4Overlap.mass) ) )
+            output.loc[tempMask, "isDimuon"] = (
+                (
+                    (abs(dimuonP4Overlap.mass - 91.1876) < 20) &
+                    (abs(dimuonP4Overlap.mass - 91.1876) < abs(dielectronP4Overlap.mass - 91.1876))
+                ) | (
+                    (abs(dimuonP4Overlap.mass - 91.1876) > 20) &
+                    (dimuonP4Overlap.mass > dielectronP4Overlap.mass)
+                )
+            )
+            output.loc[tempMask, "isDielectron"] = (
+                (
+                    (abs(dielectronP4Overlap.mass - 91.1876) < 20) &
+                    (abs(dielectronP4Overlap.mass - 91.1876) < abs(dimuonP4Overlap.mass - 91.1876))
+                ) | (
+                    (abs(dielectronP4Overlap.mass - 91.1876) > 20) &
+                    (dielectronP4Overlap.mass > dimuonP4Overlap.mass)
+                )
+            )
+
+            # output.loc[tempMask, "isDimuon"] = ( (abs(dimuonP4Overlap.mass - 91.1876) < 20) & (abs(dimuonP4Overlap.mass - 91.1876) < abs(dielectronP4Overlap.mass - 91.1876)) | ( (abs(dimuonP4Overlap.mass - 91.1876) > 20) & (dimuonP4Overlap.mass > dielectronP4Overlap.mass ) ) )
+            # output.loc[tempMask, "isDielectron"] = ( (abs(dielectronP4Overlap.mass - 91.1876) < 20) & (abs(dielectronP4Overlap.mass - 91.1876) < abs(dimuonP4Overlap.mass - 91.1876)) | ((abs(dielectronP4Overlap.mass - 91.1876) < 20) & (dielectronP4Overlap.mass > dimuonP4Overlap.mass) ) )
 
         #data events have to come from the correct PD
         if not is_mc and "El" in dataset:
@@ -319,21 +358,19 @@ class DileptonProcessor(processor.ProcessorABC):
 
 
         if len(muonP4s) > 0:
-
             muonP4s = [muonP4s[selectedIndicesMu[idx]] for idx in "01"]
             dimuonP4 = muonP4s[0] + muonP4s[1]
             selectedMuons = [muons[selectedIndicesMu[idx]] for idx in "01"]
             mu1 = selectedMuons[0]
             mu2 = selectedMuons[1]
             output = fill_leptons(self, output, dimuonP4, mu1, mu2, is_mc, self.year, "isDimuon")
- 
+            output.loc[output["isDimuon"], "bbangle"] = muonP4s[0].pvec.dot(muonP4s[1].pvec) / (muonP4s[0].pvec.p * muonP4s[1].pvec.p)
         else:
             mu1 = ak.Array([])
             mu2 = ak.Array([])
             dimuonP4 = ak.Array([])
 
         if len(electronP4s) > 0:
-
             electronP4s = [electronP4s[selectedIndicesEl[idx]] for idx in "01"]
             dielectronP4 = electronP4s[0] + electronP4s[1]        
             selectedElectrons = [electrons[selectedIndicesEl[idx]] for idx in "01"]
@@ -356,6 +393,8 @@ class DileptonProcessor(processor.ProcessorABC):
             genweight = df.genWeight
             weights.add_weight("genwgt", genweight)
             weights.add_weight("lumi", self.lumi_weights[dataset])
+            output["wgt_raw_gen"] = genweight
+            output["wgt_raw_lumi"] = self.lumi_weights[dataset]
             if self.do_pu:
                 pu_wgts = pu_evaluator(
                     self.pu_lookups,
@@ -365,28 +404,31 @@ class DileptonProcessor(processor.ProcessorABC):
                     self.auto_pu,
                 )
                 weights.add_weight("pu_wgt", pu_wgts, how="all")
+                output["wgt_raw_pu"] = pu_wgts["nom"]
             if self.do_l1pw:
                 if "L1PreFiringWeight" in df.fields:
                     l1pfw = l1pf_weights(df)
                     weights.add_weight("l1prefiring_wgt", l1pfw, how="all")
+                    output["wgt_raw_l1pf"] = l1pfw["nom"]
                 else:
                     weights.add_weight("l1prefiring_wgt", how="dummy_vars")
-
+                    output["wgt_raw_l1pf"] = 1.
         else:
             # For Data: apply Lumi mask
             if self.channel == "mu":
-            	lumi_info = LumiMask(self.parameters["lumimask_UL_mu"])
+                lumi_info = LumiMask(self.parameters["lumimask_UL_mu"])
             else:
-            	lumi_info = LumiMask(self.parameters["lumimask_UL_el"])
+                lumi_info = LumiMask(self.parameters["lumimask_UL_el"])
             mask = lumi_info(df.run, df.luminosityBlock)
 
         # Apply HLT to both Data and MC
-        if self.channel == "mu":
-            hlt = ak.to_pandas(df.HLT[self.parameters["mu_hlt"]])
-            hlt = hlt[self.parameters["mu_hlt"]].sum(axis=1)
-        else:
-            hlt = ak.to_pandas(df.HLT[self.parameters["el_hlt"]])
-            hlt = hlt[self.parameters["el_hlt"]].sum(axis=1)
+        # this is obsolete
+        # if self.channel == "mu":
+        #     hlt = ak.to_pandas(df.HLT[self.parameters["mu_hlt"]])
+        #     hlt = hlt[self.parameters["mu_hlt"]].sum(axis=1)
+        # else:
+        #     hlt = ak.to_pandas(df.HLT[self.parameters["el_hlt"]])
+        #     hlt = hlt[self.parameters["el_hlt"]].sum(axis=1)
 
 
 
@@ -470,20 +512,23 @@ class DileptonProcessor(processor.ProcessorABC):
         # ------------------------------------------------------------#
         output["r"] = None
         output.loc[
-            (output["isDimuon"]) & (abs(output.l1_eta) < 1.2) & (abs(output.l2_eta) < 1.2), "r"
+            (output["isDimuon"]) & ((abs(output.l1_eta) < 1.2) & (abs(output.l2_eta) < 1.2)), "r"
         ] = "bb"
         output.loc[
-            (output["isDimuon"]) & (abs(output.l1_eta) > 1.2) & (abs(output.l2_eta) > 1.2), "r"
+            (output["isDimuon"]) & ((abs(output.l1_eta) > 1.2) | (abs(output.l2_eta) > 1.2)), "r"
         ] = "be"
         output.loc[
-            (output["isDielectron"]) & (abs(output.l1_eta) < 1.442) & (abs(output.l2_eta) < 1.442), "r"
+            (output["isDielectron"]) & ((abs(output.l1_eta) < 1.442) & (abs(output.l2_eta) < 1.442)), "r"
         ] = "bb"
         output.loc[
-            (output["isDielectron"]) & (abs(output.l1_eta) > 1.566) | (abs(output.l2_eta) > 1.566), "r"
+            (output["isDielectron"]) & (((abs(output.l1_eta) < 1.442) & (abs(output.l2_eta) > 1.566)) | (((abs(output.l1_eta) > 1.566) & (abs(output.l2_eta) < 1.442)))), "r"
         ] = "be"
         output.loc[
-            (output["isDielectron"]) & (abs(output.l1_eta) > 1.566) & (abs(output.l2_eta) > 1.566), "r"
+            (output["isDielectron"]) & ((abs(output.l1_eta) > 1.566) & (abs(output.l2_eta) > 1.566)), "r"
         ] = "ee"
+        output.loc[
+            (output["isDielectron"]) & (((abs(output.l1_eta) > 1.442) & (abs(output.l1_eta) < 1.566)) | (((abs(output.l2_eta) > 1.442) & (abs(output.l2_eta) < 1.566)))), "r"
+        ] = "gap"
 
         output["year"] = int(self.year)
         for wgt in weights.df.columns:
@@ -596,6 +641,9 @@ class DileptonProcessor(processor.ProcessorABC):
                 ).values
 
 
+        output["dilepton_mass_resUnc"] = output.dilepton_mass.values
+        output["dilepton_mass_scaleUncUp"] = output.dilepton_mass.values
+        output["dilepton_mass_scaleUncDown"] = output.dilepton_mass.values
         if len(muonP4s) > 0:
             fill_muonUncertainties(self, output, mu1, mu2, is_mc, self.year, weights) 
         if len(electronP4s) > 0:
@@ -603,7 +651,6 @@ class DileptonProcessor(processor.ProcessorABC):
 
         if self.timer:
             self.timer.add_checkpoint("Corrections and uncertainties")
-
 
         output = output.loc[output["event_selection"], :]
         output = output.reindex(sorted(output.columns), axis=1)
@@ -663,28 +710,32 @@ class DileptonProcessor(processor.ProcessorABC):
         if self.timer:
             self.timer.add_checkpoint("Clean jets from matched leptons")
 
-        preselection = (jets.pt > 20.0) & (abs(jets.eta) < 2.4) & (jets.jetId >= 2)
+        preselection = (jets.pt > 30.0) & (abs(jets.eta) < 2.4) & (jets.jetId >= 2)
 
         if self.do_btag:
             if is_mc:
-                jets = btagSF_new(jets, self.year, correction="shape", is_UL=True)
-                jets = btagSF_new(jets, self.year, correction="wp", is_UL=True)
+                jets, _ = btagSF_new(jets, self.year, correction="shape", is_UL=True)
+                jets, btag_wp_wgt = btagSF_new(jets, self.year, correction="wp", is_UL=True)
                 variables["wgt_nominal"] = (
-                    ak.prod(jets[preselection]["btag_sf_wp"], axis=1)
+                    btag_wp_wgt["central"]["wgt"]
+                    # ak.prod(jets[preselection]["btag_sf_wp"], axis=1)
                 )
                 variables["wgt_nominal"] = variables["wgt_nominal"].fillna(1.0)
+                variables["wgt_raw_btag"] = variables["wgt_nominal"]
                 variables["wgt_nominal"] = variables[
                     "wgt_nominal"
                 ] * weights.get_weight("nominal")
                 variables["wgt_btag_up"] = (
-                    ak.prod(jets[preselection]["btag_sf_wp_up"], axis=1)
+                    btag_wp_wgt["up"]["wgt"]
+                    # ak.prod(jets[preselection]["btag_sf_wp_up"], axis=1)
                 )
                 variables["wgt_btag_up"] = variables["wgt_btag_up"].fillna(1.0)
                 variables["wgt_btag_up"] = variables[
                     "wgt_btag_up"
                 ] * weights.get_weight("nominal")
                 variables["wgt_btag_down"] = (
-                    ak.prod(jets[preselection]["btag_sf_wp_down"], axis=1)
+                    btag_wp_wgt["down"]["wgt"]
+                    # ak.prod(jets[preselection]["btag_sf_wp_down"], axis=1)
                 )
                 variables["wgt_btag_down"] = variables["wgt_btag_down"].fillna(1.0)
                 variables["wgt_btag_down"] = variables[
@@ -693,11 +744,13 @@ class DileptonProcessor(processor.ProcessorABC):
 
             else:
                 variables["wgt_nominal"] = 1.0
+                variables["wgt_raw_btag"] = 1.0
                 variables["wgt_btag_up"] = 1.0
                 variables["wgt_btag_down"] = 1.0
         else:
             if is_mc:
                 variables["wgt_nominal"] = 1.0
+                variables["wgt_raw_btag"] = 1.0
                 variables["wgt_nominal"] = variables[
                     "wgt_nominal"
                 ] * weights.get_weight("nominal")
@@ -706,11 +759,16 @@ class DileptonProcessor(processor.ProcessorABC):
                 variables["wgt_nominal"] = 1.0
 
         jets = jets[(jets.pt > 30.0) & (abs(jets.eta) < 2.4) & (jets.jetId >= 2)]
-
+        jets = jets[(~ak.is_none(jets, axis=1))]
         njets = ak.num(jets, axis=1)
         variables["njets"] = njets
 
-        jets = ak.pad_none(jets, 2)
+        bjets = jets[jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year]]
+        bjets = bjets[(~ak.is_none(bjets, axis=1))]
+        nbjets = ak.num(bjets, axis=1)
+        variables["nbjets"] = nbjets
+
+        jets = ak.pad_none(jets, 2, axis=1)
         jet1 = jets[:, 0]
         jet2 = jets[:, 1]
         Jets = [jet1, jet2]
@@ -720,13 +778,9 @@ class DileptonProcessor(processor.ProcessorABC):
 
         fill_jets(output, variables, Jets, njets, muons, electrons, is_mc=is_mc)
 
-        bjets = jets[jets.btagDeepFlavB > parameters["UL_btag_medium"][self.year]]
-        nbjets = ak.num(bjets, axis=1)
-        variables["nbjets"] = nbjets
-
-        bjets = ak.pad_none(bjets, 2)
-        bjet1 = jets[:, 0]
-        bjet2 = jets[:, 1]
+        bjets = ak.pad_none(bjets, 2, axis=1)
+        bjet1 = bjets[:, 0]
+        bjet2 = bjets[:, 1]
         bjets = [bjet1, bjet2]
 
         fill_bjets(output, variables, bjets, muons, "isDimuon", is_mc=is_mc)
@@ -747,6 +801,9 @@ class DileptonProcessor(processor.ProcessorABC):
         del df
         del jets
         del bjets
+
+        if is_mc:
+            del btag_wp_wgt
 
         return output
 

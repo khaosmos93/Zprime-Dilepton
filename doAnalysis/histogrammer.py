@@ -22,6 +22,7 @@ def calc_binwidth_weight(data, binning):
 
 
 def make_histograms(df, var_name, year, dataset, regions, channels, flavors, npart, parameters):
+
     # try to get binning from config
     if var_name in parameters["variables_lookup"].keys():
         var = parameters["variables_lookup"][var_name]
@@ -29,7 +30,8 @@ def make_histograms(df, var_name, year, dataset, regions, channels, flavors, npa
         var = Variable(var_name, var_name, 50, 0, 5, 1e-2, 1e8)
 
     # prepare list of systematic variations
-    wgt_variations = [w for w in df.columns if ("wgt_" in w)]
+    # wgt_variations = [w for w in df.columns if ("wgt_" in w)]
+    wgt_variations = ["wgt_nominal", "wgt_gen_lumi", "wgt_gen_lumi_pu", "wgt_gen_lumi_pu_l1pf", "wgt_gen_lumi_pu_l1pf_btag"]
     syst_variations = parameters.get("syst_variations", ["nominal"])
     variations = []
     for w in wgt_variations:
@@ -37,6 +39,8 @@ def make_histograms(df, var_name, year, dataset, regions, channels, flavors, npa
             variation = get_variation(w, v)
             if variation:
                 variations.append(variation)
+    
+    # variations = ["nominal"]
 
     # prepare multidimensional histogram
     # add axes for (1) mass region, (2) channel, (3) lepton flavor, (4) value or sumw2
@@ -97,19 +101,24 @@ def make_histograms(df, var_name, year, dataset, regions, channels, flavors, npa
                 continue
         if flavor == "mu":
             leptonSlice = (df.isDimuon == True)
-        else: 
+        else:
             leptonSlice = (df.isDielectron == True)
-        #print (leptonSlice)
-        #print (~((df.dilepton_mass_gen > 200) & (df.dataset == "ttbar_lep_inclusive")))
+
         slicer = (
             (df.dataset == dataset)
             & ((df.r == region) | (region == "inclusive"))
             & (leptonSlice)
             & (df.year == year)
-            & (df.dilepton_mass > 200)
+            & (df.dilepton_mass > 120)
             & ((df["channel"] == channel) | (channel == "inclusive"))
             & (~((df.dataset == "ttbar_lep_inclusive") & (df.dilepton_mass_gen > 500)))
-            #& (~((df.dataset == "WWinclusive") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "WWinclusive") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dy_M50") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dy0J_M50") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dy1J_M50") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dy2J_M50") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dyInclusive50") & ((df.l1_genPartFlav != 15) | (df.l2_genPartFlav != 15))))
+            # & ((df.nbjets < 1) | (df.min_bl_mass > 175))
         )
         data = df.loc[slicer, var_name]
         weight = df.loc[slicer, w]
@@ -138,16 +147,16 @@ def make_histograms(df, var_name, year, dataset, regions, channels, flavors, npa
             "flavor": flavor,
             "yield": weight.sum(),
         }
-        if weight.sum() == 0:
-            continue
+        # if weight.sum() == 0:
+        #     continue
         total_yield += weight.sum()
         if "return_hist" in parameters:
             if parameters["return_hist"]:
                 hist_info_row["hist"] = hist
         hist_info_rows.append(hist_info_row)
 
-    if total_yield == 0:
-        return None
+    # if total_yield == 0:
+    #     return None
 
     # save histogram for this partition to disk
     # (partitions will be joined in stage3)
@@ -244,15 +253,25 @@ def make_histograms2D(
         #                var_name = var.name
         #            else:
         #                continue
+        if flavor == "mu":
+            leptonSlice = (df.isDimuon == True)
+        else:
+            leptonSlice = (df.isDielectron == True)
+
         slicer = (
             (df.dataset == dataset)
             & ((df.r == region) | (region == "inclusive"))
+            & (leptonSlice)
             & (df.year == year)
-            #& ((flavor == "mu" & df.isDimuon) | (flavor == "el" & df.isDielectron))
-            & (df.dilepton_mass > 200)
+            & (df.dilepton_mass > 120)
             & ((df["channel"] == channel) | (channel == "inclusive"))
             & (~((df.dataset == "ttbar_lep_inclusive") & (df.dilepton_mass_gen > 500)))
             & (~((df.dataset == "WWinclusive") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dy_M50") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dy0J_M50") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dy1J_M50") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dy2J_M50") & (df.dilepton_mass_gen > 200)))
+            & (~((df.dataset == "dyInclusive50") & ((df.l1_genPartFlav != 15) | (df.l2_genPartFlav != 15))))
         )
 
         data1 = df.loc[slicer, var_name1]

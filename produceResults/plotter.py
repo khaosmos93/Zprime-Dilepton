@@ -2,14 +2,15 @@ import pandas as pd
 import numpy as np
 from hist.intervals import poisson_interval
 from python.workflow import parallelize
-from python.io import load_stage2_output_hists, mkdir
+from python.io import mkdir
 from config.variables import Variable
 
-from produceResults.io import load_stage2_output_hists_2D
+from produceResults.io import load_stage2_output_hists, load_stage2_output_hists_2D
 
 import matplotlib.pyplot as plt
 import mplhep as hep
 from matplotlib.colors import LogNorm
+from matplotlib.ticker import FormatStrFormatter
 
 style = hep.style.CMS
 style["mathtext.fontset"] = "cm"
@@ -150,7 +151,11 @@ def plot(args, parameters={}):
     region = args["region"]
     channel = args["channel"]
     var_name = args["var_name"]
-    hist = args["df"].loc[(args["df"].var_name == var_name) & (args["df"].year == year)]
+    flavor = args["flavor"]
+    hist = args["df"].loc[
+        (args["df"].var_name == var_name)
+        & (args["df"].year == year)
+    ]
 
     if var_name in parameters["variables_lookup"].keys():
         var = parameters["variables_lookup"][var_name]
@@ -159,18 +164,15 @@ def plot(args, parameters={}):
 
     if args["flavor"] == "el":
         var.caption = var.caption.replace("\mu\mu","ee")
-    print (var.caption)
+        var.caption = var.caption.replace("\mu","e")
+    # print (var.caption)
     if hist.shape[0] == 0:
         return
 
     plotsize = 8
     ratio_plot_size = 0.25
 
-    # temporary
-    # variation = "nominal"
     variation = parameters["syst_variations"]
-    print ("in here")
-    # slicer = {"region": region, "channel": channel, "variation": variation}
 
     fig = plt.figure()
 
@@ -194,7 +196,7 @@ def plot(args, parameters={}):
 
     total_yield = 0
     for wgt in variation:
-        slicer = {"region": region, "channel": channel, "variation": wgt}
+        slicer = {"region": region, "channel": channel, "flavor": flavor, "variation": wgt}
         for entry in entries.values():
             if len(entry.entry_list) == 0:
                 continue
@@ -249,7 +251,7 @@ def plot(args, parameters={}):
         num = den = []
         # get Data yields
         for wgt in variation:
-            slicer = {"region": region, "channel": channel, "variation": wgt}
+            slicer = {"region": region, "channel": channel, "flavor": flavor, "variation": wgt}
             for entry in entries.values():
                 if len(entry.entry_list) == 0:
                     continue
@@ -304,6 +306,11 @@ def plot(args, parameters={}):
         ax1.tick_params(axis="x", labelbottom=False)
     # else:
     #    ax1.set_xlabel(var.caption, loc="right")
+
+    if var.logx:
+        ax1.set_xscale("log")
+        ax1.tick_params(axis='x', which='minor', labelsize=5, labelbottom=False)
+        ax1.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
 
     if parameters["plot_ratio"]:
         # Bottom panel: Data/MC ratio plot
@@ -363,16 +370,24 @@ def plot(args, parameters={}):
         ax2.set_xlabel(var.caption, loc="right")
         ax2.legend(prop={"size": "x-small"})
 
+        if var.logx:
+            ax2.set_xscale("log")
+            ax2.tick_params(axis='x', which='minor', labelsize=5, labelbottom=False)
+            ax2.xaxis.set_minor_formatter(FormatStrFormatter("%.0f"))
+
     hep.cms.label(ax=ax1, data=True, label="Preliminary", year=year)
 
     save_plots = parameters.get("save_plots", False)
     if save_plots:
         path = parameters["plots_path"]
+        postfix = ""
+        if "postfix" in parameters:
+            postfix = parameters["postfix"]
         mkdir(path)
-        out_name = f"{path}/{var.name}_{region}_{channel}_{year}_{flavor}.png"
-        fig.savefig(out_name)
-        print(f"Saved: {out_name}")
-        out_name = f"{path}/{var.name}_{region}_{channel}_{year}_{flavor}.pdf"
+        # out_name = f"{path}/{var.name}_{region}_{channel}_{year}_{flavor}{postfix}.png"
+        # fig.savefig(out_name)
+        # print(f"Saved: {out_name}")
+        out_name = f"{path}/{var.name}_{region}_{channel}_{year}_{flavor}{postfix}.pdf"
         fig.savefig(out_name)
         print(f"Saved: {out_name}")
 
@@ -550,7 +565,7 @@ def get_plottables(hist, entry, year, var_name, slicer):
         if len(hist_values_group) == 0:
             continue
         nevts = sum(hist_values_group).sum()
-        if nevts > 0:
+        if nevts != 0:
             plottables_df = plottables_df.append(
                 pd.DataFrame(
                     [

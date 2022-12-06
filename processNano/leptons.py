@@ -89,8 +89,8 @@ def fill_leptons(processor, output, dilepton,  l1, l2, is_mc, year, flavor):
             "dz",
             "ip3d",
             "sip3d",
-            "tkRelIso",
             "charge",
+            "tkRelIso",
         ]
 
     else:
@@ -103,12 +103,19 @@ def fill_leptons(processor, output, dilepton,  l1, l2, is_mc, year, flavor):
             "ip3d",
             "sip3d",
             "charge",
+            "tkRelIso",  # dummy
         ]
 
 
     for v in varList: 
-        output.loc[output[flavor], f"l1_{v}"] = getattr(l1,v)
-        output.loc[output[flavor], f"l2_{v}"] = getattr(l2,v)
+        if hasattr(l1,v):
+            output.loc[output[flavor], f"l1_{v}"] = getattr(l1,v)
+        else:
+            output.loc[output[flavor], f"l1_{v}"] = -999.
+        if hasattr(l2,v):
+            output.loc[output[flavor], f"l2_{v}"] = getattr(l2,v)
+        else:
+            output.loc[output[flavor], f"l2_{v}"] = -999.
 
     if is_mc:
         for v in varList: 

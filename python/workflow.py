@@ -27,7 +27,7 @@ def parallelize(func, argset, client, parameters={}, seq=False):
         # debug: run sequentially
         results = []
         for args in argset:
-            print(args)
+            # print(args)
             results.append(func(args, parameters))
     else:
         # run in parallel
