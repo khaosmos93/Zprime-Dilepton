@@ -292,27 +292,28 @@ class DileptonProcessor(processor.ProcessorABC):
       
             tempMask = output["isDimuon"] & output["isDielectron"]
 
-            output.loc[tempMask, "isDimuon"] = (
-                (
-                    (abs(dimuonP4Overlap.mass - 91.1876) < 20) &
-                    (abs(dimuonP4Overlap.mass - 91.1876) < abs(dielectronP4Overlap.mass - 91.1876))
-                ) | (
-                    (abs(dimuonP4Overlap.mass - 91.1876) > 20) &
-                    (dimuonP4Overlap.mass > dielectronP4Overlap.mass)
+            isDimuonWithinZwindow = (abs(dimuonP4Overlap.mass - 91.1876) < 20)
+            isDielectronWithinZwindow = (abs(dielectronP4Overlap.mass - 91.1876) < 20)
+
+            isDimuonOverlap= (
+                (  # both in Z window -> choose closer one to the Z mass
+                    ((isDimuonWithinZwindow) & (isDielectronWithinZwindow))
+                    & (abs(dimuonP4Overlap.mass - 91.1876) < abs(dielectronP4Overlap.mass - 91.1876))
+                ) | (  # both not in Z window -> choose higher mass
+                    ((~isDimuonWithinZwindow) & (~isDielectronWithinZwindow))
+                    & (dimuonP4Overlap.mass > dielectronP4Overlap.mass)
+                ) | (  # only dimuon in Z window -> choose dimuon
+                    ((isDimuonWithinZwindow) & (~isDielectronWithinZwindow))
+                    # & True
                 )
-            )
-            output.loc[tempMask, "isDielectron"] = (
-                (
-                    (abs(dielectronP4Overlap.mass - 91.1876) < 20) &
-                    (abs(dielectronP4Overlap.mass - 91.1876) < abs(dimuonP4Overlap.mass - 91.1876))
-                ) | (
-                    (abs(dielectronP4Overlap.mass - 91.1876) > 20) &
-                    (dielectronP4Overlap.mass > dimuonP4Overlap.mass)
-                )
+                #  | (  # only dielectron in Z window -> choose dielectron
+                #     ((~isDimuonWithinZwindow) & (isDielectronWithinZwindow)) &
+                #     False
+                # )
             )
 
-            # output.loc[tempMask, "isDimuon"] = ( (abs(dimuonP4Overlap.mass - 91.1876) < 20) & (abs(dimuonP4Overlap.mass - 91.1876) < abs(dielectronP4Overlap.mass - 91.1876)) | ( (abs(dimuonP4Overlap.mass - 91.1876) > 20) & (dimuonP4Overlap.mass > dielectronP4Overlap.mass ) ) )
-            # output.loc[tempMask, "isDielectron"] = ( (abs(dielectronP4Overlap.mass - 91.1876) < 20) & (abs(dielectronP4Overlap.mass - 91.1876) < abs(dimuonP4Overlap.mass - 91.1876)) | ((abs(dielectronP4Overlap.mass - 91.1876) < 20) & (dielectronP4Overlap.mass > dimuonP4Overlap.mass) ) )
+            output.loc[tempMask, "isDimuon"] = isDimuonOverlap
+            output.loc[tempMask, "isDielectron"] = ~isDimuonOverlap
 
         #data events have to come from the correct PD
         if not is_mc and "El" in dataset:
